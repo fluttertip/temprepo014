@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mvproomrentandbook/core/constants/app_constants.dart';
-import 'package:mvproomrentandbook/core/constants/app_theme.dart';
-import 'package:mvproomrentandbook/features/auth/presentation/auth_provider.dart';
-import 'package:mvproomrentandbook/shared/widgets/common_widgets.dart';
+import 'package:kothakhoj/core/constants/app_constants.dart';
+import 'package:kothakhoj/core/constants/app_theme.dart';
+import 'package:kothakhoj/features/auth/presentation/auth_provider.dart';
+import 'package:kothakhoj/shared/widgets/common_widgets.dart';
 import 'package:provider/provider.dart';
 
 class LandlordSettingScreen extends StatelessWidget {

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:mvproomrentandbook/core/constants/app_theme.dart';
-import 'package:mvproomrentandbook/features/auth/presentation/auth_provider.dart';
-import 'package:mvproomrentandbook/features/bookings/domain/booking.dart';
-import 'package:mvproomrentandbook/features/bookings/presentation/provider/booking_provider.dart';
-import 'package:mvproomrentandbook/features/rooms/presentation/provider/room_provider.dart';
+import 'package:kothakhoj/core/constants/app_theme.dart';
+import 'package:kothakhoj/features/auth/presentation/auth_provider.dart';
+import 'package:kothakhoj/features/bookings/domain/booking.dart';
+import 'package:kothakhoj/features/bookings/presentation/provider/booking_provider.dart';
+import 'package:kothakhoj/features/rooms/presentation/provider/room_provider.dart';
 import 'package:provider/provider.dart';
 
 // Landlord screens
@@ -75,9 +75,9 @@ class _LandlordDashboardScreenState extends State<LandlordDashboardScreen> {
                     ),
                   ),
                 ),
-          
+
                 const SizedBox(height: AppSizes.paddingM),
-          
+
                 // Statistics Row
                 Row(
                   children: [
@@ -103,15 +103,16 @@ class _LandlordDashboardScreenState extends State<LandlordDashboardScreen> {
                     ),
                   ],
                 ),
-          
+
                 const SizedBox(height: AppSizes.paddingM),
-          
+
                 Row(
                   children: [
                     Expanded(
                       child: _StatCard(
                         title: 'Total Bookings',
-                        value: bookingProvider.landlordBookings.length.toString(),
+                        value: bookingProvider.landlordBookings.length
+                            .toString(),
                         icon: Icons.book,
                         color: AppColors.infoColor,
                       ),
@@ -137,9 +138,9 @@ class _LandlordDashboardScreenState extends State<LandlordDashboardScreen> {
                     ),
                   ],
                 ),
-          
+
                 const SizedBox(height: AppSizes.paddingL),
-          
+
                 // Recent Bookings
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -153,9 +154,9 @@ class _LandlordDashboardScreenState extends State<LandlordDashboardScreen> {
                     ),
                   ],
                 ),
-          
+
                 const SizedBox(height: AppSizes.paddingS),
-          
+
                 if (bookingProvider.landlordBookings.isEmpty)
                   Card(
                     color: Colors.white,

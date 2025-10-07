@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mvproomrentandbook/features/auth/presentation/auth_provider.dart';
-import 'package:mvproomrentandbook/features/bookings/domain/booking.dart';
-import 'package:mvproomrentandbook/features/bookings/presentation/provider/booking_provider.dart';
+import 'package:kothakhoj/features/auth/presentation/auth_provider.dart';
+import 'package:kothakhoj/features/bookings/domain/booking.dart';
+import 'package:kothakhoj/features/bookings/presentation/provider/booking_provider.dart';
 import 'package:provider/provider.dart';
 
 class TenantBookingManagementScreen extends StatefulWidget {

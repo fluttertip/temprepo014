@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:mvproomrentandbook/features/bookings/domain/booking.dart';
-import 'package:mvproomrentandbook/features/bookings/domain/booking_repository.dart';
+import 'package:kothakhoj/features/bookings/domain/booking.dart';
+import 'package:kothakhoj/features/bookings/domain/booking_repository.dart';
 
 enum BookingState { initial, loading, loaded, error }
 

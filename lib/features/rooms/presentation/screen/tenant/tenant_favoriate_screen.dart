@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mvproomrentandbook/features/rooms/presentation/provider/room_provider.dart';
-import 'package:mvproomrentandbook/shared/widgets/common_widgets.dart';
-import 'package:mvproomrentandbook/shared/widgets/room_card.dart';
+import 'package:kothakhoj/features/rooms/presentation/provider/room_provider.dart';
+import 'package:kothakhoj/shared/widgets/common_widgets.dart';
+import 'package:kothakhoj/shared/widgets/room_card.dart';
 import 'package:provider/provider.dart';
 
 class TenantFavoriteScreen extends StatelessWidget {

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:mvproomrentandbook/features/bookings/presentation/screens/landlord_booking_management_screen.dart';
-import 'package:mvproomrentandbook/features/rooms/presentation/screen/landlord/landlord_addroom_screen.dart';
-import 'package:mvproomrentandbook/features/rooms/presentation/screen/landlord/landlord_dashboard_screen.dart';
-import 'package:mvproomrentandbook/features/rooms/presentation/screen/landlord/landlord_setting_screen.dart';
-import 'package:mvproomrentandbook/features/bookings/presentation/screens/tenant_booking_management_screen.dart';
-import 'package:mvproomrentandbook/features/rooms/presentation/screen/tenant/tenant_favoriate_screen.dart';
-import 'package:mvproomrentandbook/features/rooms/presentation/screen/tenant/tenant_room_list_screen.dart';
-import 'package:mvproomrentandbook/features/rooms/presentation/screen/tenant/tenant_setting_screen.dart';
+import 'package:kothakhoj/features/bookings/presentation/screens/landlord_booking_management_screen.dart';
+import 'package:kothakhoj/features/rooms/presentation/screen/landlord/landlord_addroom_screen.dart';
+import 'package:kothakhoj/features/rooms/presentation/screen/landlord/landlord_dashboard_screen.dart';
+import 'package:kothakhoj/features/rooms/presentation/screen/landlord/landlord_setting_screen.dart';
+import 'package:kothakhoj/features/bookings/presentation/screens/tenant_booking_management_screen.dart';
+import 'package:kothakhoj/features/rooms/presentation/screen/tenant/tenant_favoriate_screen.dart';
+import 'package:kothakhoj/features/rooms/presentation/screen/tenant/tenant_room_list_screen.dart';
+import 'package:kothakhoj/features/rooms/presentation/screen/tenant/tenant_setting_screen.dart';
 import 'package:provider/provider.dart';
 import '../../features/auth/presentation/auth_provider.dart';
 import 'dart:ui';
@@ -28,7 +28,6 @@ class _HomeScreenUnifiedState extends State<HomeScreenUnified> {
       builder: (context, authProvider, child) {
         if (authProvider.user == null) {
           return const Scaffold(
-            // backgroundColor: Colors.red,
             body: Center(child: CircularProgressIndicator()),
           );
         }
@@ -229,8 +228,12 @@ class _RoleSwitcher extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get the actual screen width, not the constrained width
+    final screenWidth =
+        View.of(context).physicalSize.width / View.of(context).devicePixelRatio;
+    final containerWidth = screenWidth > 600 ? 280.0 : screenWidth * 0.75;
     return Container(
-      width: MediaQuery.sizeOf(context).width * 0.75,
+      width: containerWidth,
       height: 52,
       decoration: BoxDecoration(
         // Enhanced glassmorphic effect
@@ -281,7 +284,11 @@ class _RoleSwitcher extends StatelessWidget {
                         ? Alignment.centerLeft
                         : Alignment.centerRight,
                     child: Container(
-                      width: MediaQuery.sizeOf(context).width * 0.75 / 2 - 6,
+                      // width: MediaQuery.sizeOf(context).width * 0.75 / 2 - 6,
+                      width:
+                          (containerWidth - 12) /
+                          2, // Calculate based on container width
+
                       height: 46,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -336,122 +343,6 @@ class _RoleSwitcher extends StatelessWidget {
       ),
     );
   }
-
-  // @override
-  // Widget build(BuildContext context) {
-  //   return Container(
-  //     width: MediaQuery.sizeOf(context).width * 0.8,
-  //     // width: double.infinity,
-  //     height: 56,
-  //     // margin: const EdgeInsets.symmetric(horizontal: 20),
-  //     decoration: BoxDecoration(
-  //       // Glassmorphic background
-  //       gradient: LinearGradient(
-  //         begin: Alignment.topLeft,
-  //         end: Alignment.bottomRight,
-  //         colors: [
-  //           Colors.white.withOpacity(0.25),
-  //           Colors.white.withOpacity(0.15),
-  //         ],
-  //       ),
-  //       borderRadius: BorderRadius.circular(28),
-  //       border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
-  //       boxShadow: [
-  //         BoxShadow(
-  //           color: Colors.black.withOpacity(0.1),
-  //           blurRadius: 20,
-  //           offset: const Offset(0, 8),
-  //         ),
-  //         BoxShadow(
-  //           color: Colors.white.withOpacity(0.1),
-  //           blurRadius: 10,
-  //           offset: const Offset(0, -2),
-  //         ),
-  //       ],
-  //     ),
-  //     child: ClipRRect(
-  //       borderRadius: BorderRadius.circular(28),
-  //       child: BackdropFilter(
-  //         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-  //         child: Container(
-  //           decoration: BoxDecoration(
-  //             color: Colors.white.withOpacity(0.1),
-  //             borderRadius: BorderRadius.circular(28),
-  //           ),
-  //           child: Padding(
-  //             padding: const EdgeInsets.all(4),
-  //             child: Stack(
-  //               children: [
-  //                 // Sliding indicator
-  //                 AnimatedAlign(
-  //                   duration: const Duration(milliseconds: 400),
-  //                   curve: Curves.elasticOut,
-  //                   alignment: activeRole == "Find Room"
-  //                       ? Alignment.centerLeft
-  //                       : Alignment.centerRight,
-  //                   child: Container(
-  //                     width: MediaQuery.sizeOf(context).width * 0.85 / 2 - 8,
-  //                     height: 48,
-  //                     decoration: BoxDecoration(
-  //                       gradient: LinearGradient(
-  //                         begin: Alignment.topLeft,
-  //                         end: Alignment.bottomRight,
-  //                         colors: [
-  //                           Theme.of(context).colorScheme.primary,
-  //                           Theme.of(
-  //                             context,
-  //                           ).colorScheme.primary.withOpacity(0.8),
-  //                         ],
-  //                       ),
-  //                       borderRadius: BorderRadius.circular(24),
-  //                       boxShadow: [
-  //                         BoxShadow(
-  //                           color: Theme.of(
-  //                             context,
-  //                           ).colorScheme.primary.withOpacity(0.4),
-  //                           blurRadius: 12,
-  //                           offset: const Offset(0, 4),
-  //                         ),
-  //                         BoxShadow(
-  //                           color: Theme.of(
-  //                             context,
-  //                           ).colorScheme.primary.withOpacity(0.2),
-  //                           blurRadius: 6,
-  //                           offset: const Offset(0, 2),
-  //                         ),
-  //                       ],
-  //                     ),
-  //                   ),
-  //                 ),
-  //                 // Button options
-  //                 Row(
-  //                   children: [
-  //                     Expanded(
-  //                       child: _SwitcherOption(
-  //                         label: "Find Room",
-  //                         isActive: activeRole == "Find Room",
-  //                         onTap: () => onRoleChanged("Find Room"),
-  //                         icon: Icons.search_rounded,
-  //                       ),
-  //                     ),
-  //                     Expanded(
-  //                       child: _SwitcherOption(
-  //                         label: "Rent Room",
-  //                         isActive: activeRole == "Rent Room",
-  //                         onTap: () => onRoleChanged("Rent Room"),
-  //                         icon: Icons.add_home_outlined,
-  //                       ),
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ],
-  //             ),
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
 }
 
 class _SwitcherOption extends StatelessWidget {
@@ -473,6 +364,7 @@ class _SwitcherOption extends StatelessWidget {
       onTap: onTap,
       child: Container(
         height: 46,
+        width: 50,
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(23)),
         child: Material(
           color: Colors.transparent,
@@ -524,60 +416,4 @@ class _SwitcherOption extends StatelessWidget {
       ),
     );
   }
-
-  // @override
-  // Widget build(BuildContext context) {
-  //   return GestureDetector(
-  //     onTap: onTap,
-  //     child: Container(
-  //       height: 48,
-  //       decoration: BoxDecoration(borderRadius: BorderRadius.circular(24)),
-  //       child: Material(
-  //         color: Colors.transparent,
-  //         child: InkWell(
-  //           onTap: onTap,
-  //           borderRadius: BorderRadius.circular(24),
-  //           splashColor: Colors.white.withOpacity(0.1),
-  //           child: Container(
-  //             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-  //             child: Row(
-  //               mainAxisAlignment: MainAxisAlignment.center,
-  //               mainAxisSize: MainAxisSize.min,
-  //               children: [
-  //                 AnimatedScale(
-  //                   scale: isActive ? 1.1 : 1.0,
-  //                   duration: const Duration(milliseconds: 300),
-  //                   child: Icon(
-  //                     icon,
-  //                     size: 20,
-  //                     color: isActive ? Colors.white : Colors.grey[600],
-  //                   ),
-  //                 ),
-  //                 const SizedBox(width: 8),
-  //                 Flexible(
-  //                   child: AnimatedDefaultTextStyle(
-  //                     duration: const Duration(milliseconds: 300),
-  //                     style: TextStyle(
-  //                       color: isActive ? Colors.white : Colors.grey[600],
-  //                       fontWeight: isActive
-  //                           ? FontWeight.w700
-  //                           : FontWeight.w600,
-  //                       fontSize: 14,
-  //                       letterSpacing: 0.5,
-  //                     ),
-  //                     child: Text(
-  //                       label,
-  //                       textAlign: TextAlign.center,
-  //                       overflow: TextOverflow.ellipsis,
-  //                     ),
-  //                   ),
-  //                 ),
-  //               ],
-  //             ),
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
 }

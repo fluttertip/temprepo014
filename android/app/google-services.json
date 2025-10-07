@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "776388841511",
+    "project_id": "kothakhoj-322c5",
+    "storage_bucket": "kothakhoj-322c5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:776388841511:android:92ee4c676ca9dd11fafe02",
+        "android_client_info": {
+          "package_name": "com.example.kothakhoj"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "776388841511-ekuomv5at7g7edmb9fsd017jau3s9epb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDBMkmzvj3azc4mBIoGxQ9cbL9yc2Mg5Qk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "776388841511-ekuomv5at7g7edmb9fsd017jau3s9epb.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "776388841511-k6mcpv6leeui34a2s5iqo8gae432a5vh.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.kothakhoj"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

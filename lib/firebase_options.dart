@@ -47,29 +47,30 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAEnqNL8krhCEfFkuyXW3PrCmPeg5Sp85o',
-    appId: '1:185746498577:web:8a1d51a4dae3539c55bdb0',
-    messagingSenderId: '185746498577',
-    projectId: 'mvproomrentandbook-ed049',
-    authDomain: 'mvproomrentandbook-ed049.firebaseapp.com',
-    storageBucket: 'mvproomrentandbook-ed049.firebasestorage.app',
-    measurementId: 'G-R478L82F4G',
+    apiKey: 'AIzaSyAAQ90GviU5WyWDRXArXjzuvZNLRRfORJw',
+    appId: '1:776388841511:web:97453e00e34967f5fafe02',
+    messagingSenderId: '776388841511',
+    projectId: 'kothakhoj-322c5',
+    authDomain: 'kothakhoj-322c5.firebaseapp.com',
+    storageBucket: 'kothakhoj-322c5.firebasestorage.app',
+    measurementId: 'G-S4KVNC2GJF',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyC82N6GI712SMUFoGvLmniR-x1iJmT_9g0',
-    appId: '1:185746498577:android:5a7921c0eb097f5455bdb0',
-    messagingSenderId: '185746498577',
-    projectId: 'mvproomrentandbook-ed049',
-    storageBucket: 'mvproomrentandbook-ed049.firebasestorage.app',
+    apiKey: 'AIzaSyDBMkmzvj3azc4mBIoGxQ9cbL9yc2Mg5Qk',
+    appId: '1:776388841511:android:92ee4c676ca9dd11fafe02',
+    messagingSenderId: '776388841511',
+    projectId: 'kothakhoj-322c5',
+    storageBucket: 'kothakhoj-322c5.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBdA91PXsDuk01IQ_rL-Ma4jYe6sfXbaaY',
-    appId: '1:185746498577:ios:1708d4559577350155bdb0',
-    messagingSenderId: '185746498577',
-    projectId: 'mvproomrentandbook-ed049',
-    storageBucket: 'mvproomrentandbook-ed049.firebasestorage.app',
-    iosBundleId: 'com.example.mvproomrentandbook',
+    apiKey: 'AIzaSyC4D0X8obAjFwwfnPoXw0dfMXI6QltcG-Y',
+    appId: '1:776388841511:ios:17a1045855195c3efafe02',
+    messagingSenderId: '776388841511',
+    projectId: 'kothakhoj-322c5',
+    storageBucket: 'kothakhoj-322c5.firebasestorage.app',
+    iosClientId: '776388841511-k6mcpv6leeui34a2s5iqo8gae432a5vh.apps.googleusercontent.com',
+    iosBundleId: 'com.example.kothakhoj',
   );
 }

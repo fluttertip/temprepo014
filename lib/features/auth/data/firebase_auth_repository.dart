@@ -8,7 +8,7 @@ import '../domain/user.dart';
 import '../../../core/errors/failures.dart';
 import '../../../core/errors/error_handler.dart';
 import '../../../core/constants/app_constants.dart';
-import'dart:async';
+import 'dart:async';
 
 class FirebaseAuthRepository implements AuthRepository {
   final firebase_auth.FirebaseAuth _firebaseAuth;
@@ -24,15 +24,50 @@ class FirebaseAuthRepository implements AuthRepository {
   Future<void> _initializeGoogleSignIn() async {
     if (!_isGoogleSignInInitialized) {
       try {
-        await GoogleSignIn.instance.initialize();
+        print('Initializing Google Sign-In...');
+
+        // For google_sign_in 7.x, initialize with proper configuration
+        await GoogleSignIn.instance.initialize(
+          // Use your actual web client ID from the index.html
+          clientId: kIsWeb
+              ? '185746498577-sodrd9biacf0pjjljedm9r72l95mr0al.apps.googleusercontent.com'
+              : null,
+          // For Android, this is optional and read from google-services.json
+          serverClientId: null,
+        );
+
         _isGoogleSignInInitialized = true;
         print('Google Sign-In initialized successfully');
+
+        // Set up authentication event listener
+        GoogleSignIn.instance.authenticationEvents.listen(
+          (GoogleSignInAuthenticationEvent event) {
+            print('Authentication event: $event');
+          },
+          onError: (error) {
+            print('Authentication event error: $error');
+          },
+        );
       } catch (e) {
         print('Error initializing Google Sign-In: $e');
         _isGoogleSignInInitialized = false;
+        rethrow;
       }
     }
   }
+
+  // Future<void> _initializeGoogleSignIn() async {
+  //   if (!_isGoogleSignInInitialized) {
+  //     try {
+  //       await GoogleSignIn.instance.initialize();
+  //       _isGoogleSignInInitialized = true;
+  //       print('Google Sign-In initialized successfully');
+  //     } catch (e) {
+  //       print('Error initializing Google Sign-In: $e');
+  //       _isGoogleSignInInitialized = false;
+  //     }
+  //   }
+  // }
 
   @override
   Stream<User?> get authStateChanges {
@@ -125,145 +160,108 @@ class FirebaseAuthRepository implements AuthRepository {
 
   Future<Either<Failure, User>> _signInWithGoogleMobile() async {
     try {
-      print('Mobile Google Sign-In: Using new 7.x API');
+      print('Mobile Google Sign-In: Using correct 7.x approach');
 
-      // Check if authentication is supported
+      // Step 1: Check if authenticate is supported
       if (!GoogleSignIn.instance.supportsAuthenticate()) {
         return const Left(
           AuthFailure('Google Sign-In not supported on this platform'),
         );
       }
 
-      // Use the new authenticate method
-      await GoogleSignIn.instance.authenticate();
+      // Step 2: Authenticate with Google
+      print('Step 1: Authenticating with Google...');
+      final GoogleSignInAccount? googleUser = await GoogleSignIn.instance
+          .authenticate();
 
-      // Listen for authentication events
-      final completer = Completer<Either<Failure, User>>();
-      late StreamSubscription subscription;
-
-      subscription = GoogleSignIn.instance.authenticationEvents.listen(
-        (GoogleSignInAuthenticationEvent event) async {
-          try {
-            switch (event) {
-              case GoogleSignInAuthenticationEventSignIn():
-                final googleUser = event.user;
-                print('Google user authenticated: ${googleUser.email}');
-
-                // Get ID token for Firebase
-                final Map<String, String>? headers = await googleUser
-                    .authorizationClient
-                    .authorizationHeaders(['openid', 'email', 'profile']);
-
-                if (headers == null) {
-                  completer.complete(
-                    const Left(
-                      AuthFailure('Failed to get authorization headers'),
-                    ),
-                  );
-                  subscription.cancel();
-                  return;
-                }
-
-                // Extract the ID token from headers (this is a simplified approach)
-                // In practice, you might need to use the Google Sign-In API differently
-                // For now, let's use a different approach with Firebase Auth
-
-                // Alternative: Use Firebase Auth with Google provider
-                final googleProvider = firebase_auth.GoogleAuthProvider();
-
-                // Note: In the new API, we need to handle this differently
-                // This is a temporary workaround - you might need to implement
-                // a custom solution based on your specific needs
-
-                final result = await _handleGoogleUserWithFirebase(googleUser);
-                completer.complete(result);
-                subscription.cancel();
-                break;
-
-              case GoogleSignInAuthenticationEventSignOut():
-                completer.complete(
-                  const Left(AuthFailure('Google sign-in was cancelled')),
-                );
-                subscription.cancel();
-                break;
-            }
-          } catch (e) {
-            print('Error in authentication event: $e');
-            completer.complete(
-              Left(AuthFailure('Authentication failed: ${e.toString()}')),
-            );
-            subscription.cancel();
-          }
-        },
-        onError: (error) {
-          print('Authentication error: $error');
-          completer.complete(
-            Left(AuthFailure('Authentication error: ${error.toString()}')),
-          );
-          subscription.cancel();
-        },
-      );
-
-      return await completer.future;
-    } catch (e) {
-      print('Mobile Google Sign-In Error: $e');
-      return Left(AuthFailure('Mobile sign-in failed: ${e.toString()}'));
-    }
-  }
-
-  Future<Either<Failure, User>> _handleGoogleUserWithFirebase(
-    GoogleSignInAccount googleUser,
-  ) async {
-    try {
-      print('Handling Google user with Firebase: ${googleUser.email}');
-
-      // For the new Google Sign-In API, we need to get server auth code
-      // and use it with Firebase Auth
-      const scopes = ['openid', 'email', 'profile'];
-
-      final GoogleSignInServerAuthorization? serverAuth = await googleUser
-          .authorizationClient
-          .authorizeServer(scopes);
-
-      if (serverAuth == null) {
-        return const Left(AuthFailure('Failed to get server authorization'));
+      if (googleUser == null) {
+        return const Left(AuthFailure('Google authentication was cancelled'));
       }
 
-      // Use the server auth code with Firebase
-      final firebase_auth.AuthCredential credential = firebase_auth
-          .GoogleAuthProvider.credential(idToken: serverAuth.serverAuthCode);
+      print('Google user authenticated: ${googleUser.email}');
 
-      final firebase_auth.UserCredential userCredential = await _firebaseAuth
-          .signInWithCredential(credential);
+      // Step 3: Get client authorization for basic scopes
+      print('Step 2: Getting client authorization...');
+      final GoogleSignInClientAuthorization? clientAuth = await googleUser
+          .authorizationClient
+          .authorizationForScopes(['openid', 'email', 'profile']);
+
+      if (clientAuth == null) {
+        // If no existing authorization, request it
+        print('No existing authorization, requesting scopes...');
+        final GoogleSignInClientAuthorization newClientAuth = await googleUser
+            .authorizationClient
+            .authorizeScopes(['openid', 'email', 'profile']);
+
+        if (newClientAuth.accessToken.isEmpty) {
+          return const Left(AuthFailure('Failed to get access token'));
+        }
+      }
+
+      // Step 4: For Firebase, we need to create our own ID token
+      // Since google_sign_in 7.x doesn't provide direct ID token access,
+      // we'll use Firebase Auth's signInWithPopup equivalent for mobile
+      print('Step 3: Using Firebase Auth directly...');
+
+      // Create a Google provider
+      final googleProvider = firebase_auth.GoogleAuthProvider();
+      googleProvider.addScope('email');
+      googleProvider.addScope('profile');
+
+      // Use signInWithProvider for mobile (equivalent to signInWithPopup for web)
+      final firebase_auth.UserCredential userCredential;
+
+      try {
+        userCredential = await _firebaseAuth.signInWithProvider(googleProvider);
+      } catch (e) {
+        print('signInWithProvider failed, trying alternative approach: $e');
+
+        // Alternative: Try to get ID token through server authorization
+        final GoogleSignInServerAuthorization? serverAuth = await googleUser
+            .authorizationClient
+            .authorizeServer(['openid', 'email', 'profile']);
+
+        if (serverAuth == null || serverAuth.serverAuthCode.isEmpty) {
+          return const Left(AuthFailure('Failed to get server authorization'));
+        }
+
+        // The serverAuthCode can be exchanged for tokens on your backend
+        // For now, let's try a different approach - manual credential creation
+        throw Exception('Need backend integration for server auth code');
+      }
 
       final firebase_auth.User? firebaseUser = userCredential.user;
+
       if (firebaseUser == null) {
-        return const Left(AuthFailure('Failed to sign in with Firebase'));
+        return const Left(AuthFailure('Firebase authentication failed'));
       }
 
+      print('Firebase sign-in successful: ${firebaseUser.email}');
       return await _handleFirebaseUser(firebaseUser);
     } catch (e) {
-      print('Error handling Google user with Firebase: $e');
+      print('Mobile Google Sign-In Error: $e');
 
-      // Fallback: Create Firebase user from Google user data
+      // Clean up on error
       try {
-        final firebase_auth.UserCredential userCredential = await _firebaseAuth
-            .signInAnonymously();
-
-        // Update the user profile with Google data
-        await userCredential.user?.updateDisplayName(googleUser.displayName);
-        await userCredential.user?.updatePhotoURL(googleUser.photoUrl);
-
-        if (userCredential.user != null) {
-          return await _handleFirebaseUser(userCredential.user!);
-        }
-      } catch (fallbackError) {
-        print('Fallback auth also failed: $fallbackError');
+        await GoogleSignIn.instance.disconnect();
+      } catch (cleanupError) {
+        print('Cleanup error: $cleanupError');
       }
 
-      return Left(AuthFailure('Failed to authenticate: ${e.toString()}'));
+      // Handle specific error types
+      if (e.toString().contains('canceled') ||
+          e.toString().contains('cancelled')) {
+        return const Left(AuthFailure('Sign-in was cancelled'));
+      } else if (e.toString().contains('network')) {
+        return const Left(
+          AuthFailure('Network error. Please check your connection.'),
+        );
+      }
+
+      return Left(AuthFailure('Sign-in failed: ${e.toString()}'));
     }
   }
+
 
   Future<Either<Failure, User>> _handleFirebaseUser(
     firebase_auth.User firebaseUser,
