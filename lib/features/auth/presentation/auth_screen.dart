@@ -35,7 +35,7 @@ class AuthScreen extends StatelessWidget {
 
               // App Name
               Text(
-                'Room Rental\nKathmandu',
+                'Room Finder',
                 style: AppTextStyles.heading1.copyWith(
                   color: AppColors.primaryColor,
                 ),
@@ -46,7 +46,7 @@ class AuthScreen extends StatelessWidget {
 
               // Subtitle
               Text(
-                'Find your perfect room or rent out your space\nin the heart of Kathmandu',
+                'Find your perfect room or rent out your space',
                 style: AppTextStyles.bodyLarge.copyWith(
                   color: AppColors.textSecondary,
                 ),
