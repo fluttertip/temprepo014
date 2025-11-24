@@ -162,7 +162,7 @@ class _TenantRoomListScreenState extends State<TenantRoomListScreen> {
                 ),
               ),
 
-              value: _selectedLocation,
+              initialValue: _selectedLocation,
               isExpanded: true, // This prevents overflow
               items: [
                 const DropdownMenuItem<String>(
@@ -214,7 +214,7 @@ class _TenantRoomListScreenState extends State<TenantRoomListScreen> {
                 ),
               ),
 
-              value: _selectedType,
+              initialValue: _selectedType,
               isExpanded: true, // This prevents overflow
               items: [
                 const DropdownMenuItem<String>(

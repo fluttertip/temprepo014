@@ -12,7 +12,7 @@ class RoomProvider extends ChangeNotifier {
   RoomState _state = RoomState.initial;
   List<Room> _rooms = [];
   List<Room> _myRooms = [];
-  List<Room> _favoriteRooms = [];
+  final List<Room> _favoriteRooms = [];
   String? _errorMessage;
 
   RoomState get state => _state;

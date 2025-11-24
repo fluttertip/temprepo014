@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:google_sign_in/google_sign_in.dart';
@@ -8,7 +9,6 @@ import '../domain/user.dart';
 import '../../../core/errors/failures.dart';
 import '../../../core/errors/error_handler.dart';
 import '../../../core/constants/app_constants.dart';
-import 'dart:async';
 
 class FirebaseAuthRepository implements AuthRepository {
   final firebase_auth.FirebaseAuth _firebaseAuth;
@@ -18,62 +18,38 @@ class FirebaseAuthRepository implements AuthRepository {
   FirebaseAuthRepository({
     firebase_auth.FirebaseAuth? firebaseAuth,
     FirebaseFirestore? firestore,
-  }) : _firebaseAuth = firebaseAuth ?? firebase_auth.FirebaseAuth.instance,
-       _firestore = firestore ?? FirebaseFirestore.instance;
+  })  : _firebaseAuth = firebaseAuth ?? firebase_auth.FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance;
 
+  // ---------------- Google Sign-In Initialization ----------------
   Future<void> _initializeGoogleSignIn() async {
-    if (!_isGoogleSignInInitialized) {
-      try {
-        print('Initializing Google Sign-In...');
+    if (_isGoogleSignInInitialized) return;
 
-        // For google_sign_in 7.x, initialize with proper configuration
-        await GoogleSignIn.instance.initialize(
-          // Use your actual web client ID from the index.html
-          clientId: kIsWeb
-              ? '185746498577-sodrd9biacf0pjjljedm9r72l95mr0al.apps.googleusercontent.com'
-              : null,
-          // For Android, this is optional and read from google-services.json
-          serverClientId: null,
-        );
+    try {
+      print('Initializing Google Sign-In...');
+      await GoogleSignIn.instance.initialize(
+        clientId: kIsWeb
+            ? '776388841511-ekuomv5at7g7edmb9fsd017jau3s9epb.apps.googleusercontent.com'
+            : null,
+        serverClientId: null, // Optional on Android/iOS
+      );
 
-        _isGoogleSignInInitialized = true;
-        print('Google Sign-In initialized successfully');
+      GoogleSignIn.instance.authenticationEvents.listen(
+        (event) => print('Authentication event: $event'),
+        onError: (error) => print('Authentication event error: $error'),
+      );
 
-        // Set up authentication event listener
-        GoogleSignIn.instance.authenticationEvents.listen(
-          (GoogleSignInAuthenticationEvent event) {
-            print('Authentication event: $event');
-          },
-          onError: (error) {
-            print('Authentication event error: $error');
-          },
-        );
-      } catch (e) {
-        print('Error initializing Google Sign-In: $e');
-        _isGoogleSignInInitialized = false;
-        rethrow;
-      }
+      _isGoogleSignInInitialized = true;
+    } catch (e) {
+      print('Google Sign-In initialization failed: $e');
+      rethrow;
     }
   }
 
-  // Future<void> _initializeGoogleSignIn() async {
-  //   if (!_isGoogleSignInInitialized) {
-  //     try {
-  //       await GoogleSignIn.instance.initialize();
-  //       _isGoogleSignInInitialized = true;
-  //       print('Google Sign-In initialized successfully');
-  //     } catch (e) {
-  //       print('Error initializing Google Sign-In: $e');
-  //       _isGoogleSignInInitialized = false;
-  //     }
-  //   }
-  // }
-
+  // ---------------- Auth State Changes ----------------
   @override
   Stream<User?> get authStateChanges {
-    return _firebaseAuth.authStateChanges().asyncMap((
-      firebase_auth.User? firebaseUser,
-    ) async {
+    return _firebaseAuth.authStateChanges().asyncMap((firebase_auth.User? firebaseUser) async {
       print('Firebase auth state changed: ${firebaseUser?.email}');
       if (firebaseUser == null) return null;
 
@@ -84,12 +60,10 @@ class FirebaseAuthRepository implements AuthRepository {
             .get();
 
         if (userDoc.exists) {
-          final user = User.fromMap(userDoc.data()!);
-          print('User found in Firestore: ${user.email}');
-          return user;
+          return User.fromMap(userDoc.data()!);
         }
 
-        // Create new user document
+        // Create new user if not exists
         final user = User(
           id: firebaseUser.uid,
           email: firebaseUser.email ?? '',
@@ -101,12 +75,7 @@ class FirebaseAuthRepository implements AuthRepository {
           updatedAt: DateTime.now(),
         );
 
-        print('Creating new user in Firestore: ${user.email}');
-        await _firestore
-            .collection(AppConstants.usersCollection)
-            .doc(firebaseUser.uid)
-            .set(user.toMap());
-
+        await _firestore.collection(AppConstants.usersCollection).doc(firebaseUser.uid).set(user.toMap());
         return user;
       } catch (e) {
         print('Error in authStateChanges: $e');
@@ -115,12 +84,10 @@ class FirebaseAuthRepository implements AuthRepository {
     });
   }
 
+  // ---------------- Sign-In ----------------
   @override
   Future<Either<Failure, User>> signInWithGoogle() async {
     try {
-      print('Starting Google Sign-In...');
-
-      // Initialize Google Sign-In first
       await _initializeGoogleSignIn();
 
       if (kIsWeb) {
@@ -136,20 +103,16 @@ class FirebaseAuthRepository implements AuthRepository {
 
   Future<Either<Failure, User>> _signInWithGoogleWeb() async {
     try {
-      print('Web Google Sign-In: Using Firebase Auth popup');
-
-      // For web, use Firebase Auth directly with Google provider
+      print('Web Google Sign-In using signInWithPopup...');
       final googleProvider = firebase_auth.GoogleAuthProvider();
       googleProvider.addScope('email');
       googleProvider.addScope('profile');
 
-      final firebase_auth.UserCredential userCredential = await _firebaseAuth
-          .signInWithPopup(googleProvider);
+      final firebase_auth.UserCredential userCredential =
+          await _firebaseAuth.signInWithPopup(googleProvider);
 
       final firebase_auth.User? firebaseUser = userCredential.user;
-      if (firebaseUser == null) {
-        return const Left(AuthFailure('Failed to sign in with Google'));
-      }
+      if (firebaseUser == null) return const Left(AuthFailure('Failed to sign in with Google'));
 
       return await _handleFirebaseUser(firebaseUser);
     } catch (e) {
@@ -160,124 +123,44 @@ class FirebaseAuthRepository implements AuthRepository {
 
   Future<Either<Failure, User>> _signInWithGoogleMobile() async {
     try {
-      print('Mobile Google Sign-In: Using correct 7.x approach');
-
-      // Step 1: Check if authenticate is supported
+      print('Mobile Google Sign-In using authenticate()...');
       if (!GoogleSignIn.instance.supportsAuthenticate()) {
-        return const Left(
-          AuthFailure('Google Sign-In not supported on this platform'),
-        );
+        return const Left(AuthFailure('Google Sign-In not supported on this platform'));
       }
 
-      // Step 2: Authenticate with Google
-      print('Step 1: Authenticating with Google...');
-      final GoogleSignInAccount? googleUser = await GoogleSignIn.instance
-          .authenticate();
+      final GoogleSignInAccount googleUser = await GoogleSignIn.instance.authenticate();
+      final auth = await googleUser.authentication;
 
-      if (googleUser == null) {
-        return const Left(AuthFailure('Google authentication was cancelled'));
-      }
+      final credential = firebase_auth.GoogleAuthProvider.credential(
+        idToken: auth.idToken,
+        accessToken: auth.idToken,
+      );
 
-      print('Google user authenticated: ${googleUser.email}');
-
-      // Step 3: Get client authorization for basic scopes
-      print('Step 2: Getting client authorization...');
-      final GoogleSignInClientAuthorization? clientAuth = await googleUser
-          .authorizationClient
-          .authorizationForScopes(['openid', 'email', 'profile']);
-
-      if (clientAuth == null) {
-        // If no existing authorization, request it
-        print('No existing authorization, requesting scopes...');
-        final GoogleSignInClientAuthorization newClientAuth = await googleUser
-            .authorizationClient
-            .authorizeScopes(['openid', 'email', 'profile']);
-
-        if (newClientAuth.accessToken.isEmpty) {
-          return const Left(AuthFailure('Failed to get access token'));
-        }
-      }
-
-      // Step 4: For Firebase, we need to create our own ID token
-      // Since google_sign_in 7.x doesn't provide direct ID token access,
-      // we'll use Firebase Auth's signInWithPopup equivalent for mobile
-      print('Step 3: Using Firebase Auth directly...');
-
-      // Create a Google provider
-      final googleProvider = firebase_auth.GoogleAuthProvider();
-      googleProvider.addScope('email');
-      googleProvider.addScope('profile');
-
-      // Use signInWithProvider for mobile (equivalent to signInWithPopup for web)
-      final firebase_auth.UserCredential userCredential;
-
-      try {
-        userCredential = await _firebaseAuth.signInWithProvider(googleProvider);
-      } catch (e) {
-        print('signInWithProvider failed, trying alternative approach: $e');
-
-        // Alternative: Try to get ID token through server authorization
-        final GoogleSignInServerAuthorization? serverAuth = await googleUser
-            .authorizationClient
-            .authorizeServer(['openid', 'email', 'profile']);
-
-        if (serverAuth == null || serverAuth.serverAuthCode.isEmpty) {
-          return const Left(AuthFailure('Failed to get server authorization'));
-        }
-
-        // The serverAuthCode can be exchanged for tokens on your backend
-        // For now, let's try a different approach - manual credential creation
-        throw Exception('Need backend integration for server auth code');
-      }
+      final firebase_auth.UserCredential userCredential =
+          await _firebaseAuth.signInWithCredential(credential);
 
       final firebase_auth.User? firebaseUser = userCredential.user;
+      if (firebaseUser == null) return const Left(AuthFailure('Firebase authentication failed'));
 
-      if (firebaseUser == null) {
-        return const Left(AuthFailure('Firebase authentication failed'));
-      }
-
-      print('Firebase sign-in successful: ${firebaseUser.email}');
       return await _handleFirebaseUser(firebaseUser);
     } catch (e) {
       print('Mobile Google Sign-In Error: $e');
-
-      // Clean up on error
       try {
         await GoogleSignIn.instance.disconnect();
-      } catch (cleanupError) {
-        print('Cleanup error: $cleanupError');
-      }
-
-      // Handle specific error types
-      if (e.toString().contains('canceled') ||
-          e.toString().contains('cancelled')) {
-        return const Left(AuthFailure('Sign-in was cancelled'));
-      } else if (e.toString().contains('network')) {
-        return const Left(
-          AuthFailure('Network error. Please check your connection.'),
-        );
-      }
+      } catch (_) {}
 
       return Left(AuthFailure('Sign-in failed: ${e.toString()}'));
     }
   }
 
-
-  Future<Either<Failure, User>> _handleFirebaseUser(
-    firebase_auth.User firebaseUser,
-  ) async {
+  // ---------------- Handle Firebase User ----------------
+  Future<Either<Failure, User>> _handleFirebaseUser(firebase_auth.User firebaseUser) async {
     try {
-      print('Handling Firebase user: ${firebaseUser.email}');
-
-      final userDoc = await _firestore
-          .collection(AppConstants.usersCollection)
-          .doc(firebaseUser.uid)
-          .get();
+      final userDoc = await _firestore.collection(AppConstants.usersCollection).doc(firebaseUser.uid).get();
 
       User user;
       if (userDoc.exists) {
         user = User.fromMap(userDoc.data()!);
-        print('Existing user loaded: ${user.email}');
       } else {
         user = User(
           id: firebaseUser.uid,
@@ -289,12 +172,7 @@ class FirebaseAuthRepository implements AuthRepository {
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
-
-        print('Creating new user: ${user.email}');
-        await _firestore
-            .collection(AppConstants.usersCollection)
-            .doc(firebaseUser.uid)
-            .set(user.toMap());
+        await _firestore.collection(AppConstants.usersCollection).doc(firebaseUser.uid).set(user.toMap());
       }
 
       return Right(user);
@@ -304,56 +182,32 @@ class FirebaseAuthRepository implements AuthRepository {
     }
   }
 
+  // ---------------- Other Auth Methods ----------------
   @override
   Future<Either<Failure, User?>> getCurrentUser() async {
     try {
       final firebase_auth.User? firebaseUser = _firebaseAuth.currentUser;
-      print('Getting current user: ${firebaseUser?.email}');
+      if (firebaseUser == null) return const Right(null);
 
-      if (firebaseUser == null) {
-        return const Right(null);
-      }
-
-      final userDoc = await _firestore
-          .collection(AppConstants.usersCollection)
-          .doc(firebaseUser.uid)
-          .get();
-
-      if (userDoc.exists) {
-        final user = User.fromMap(userDoc.data()!);
-        return Right(user);
-      }
+      final userDoc = await _firestore.collection(AppConstants.usersCollection).doc(firebaseUser.uid).get();
+      if (userDoc.exists) return Right(User.fromMap(userDoc.data()!));
 
       return const Right(null);
     } catch (e) {
-      print('Error getting current user: $e');
       return Left(FirebaseErrorHandler.handleGenericError(e));
     }
   }
 
   @override
-  Future<Either<Failure, User>> updateUserRole(
-    String userId,
-    String newRole,
-  ) async {
+  Future<Either<Failure, User>> updateUserRole(String userId, String newRole) async {
     try {
-      await _firestore
-          .collection(AppConstants.usersCollection)
-          .doc(userId)
-          .update({
-            'activeRole': newRole,
-            'updatedAt': DateTime.now().millisecondsSinceEpoch,
-          });
+      await _firestore.collection(AppConstants.usersCollection).doc(userId).update({
+        'activeRole': newRole,
+        'updatedAt': DateTime.now(),
+      });
 
-      final userDoc = await _firestore
-          .collection(AppConstants.usersCollection)
-          .doc(userId)
-          .get();
-
-      if (userDoc.exists) {
-        final user = User.fromMap(userDoc.data()!);
-        return Right(user);
-      }
+      final userDoc = await _firestore.collection(AppConstants.usersCollection).doc(userId).get();
+      if (userDoc.exists) return Right(User.fromMap(userDoc.data()!));
 
       return const Left(AuthFailure('User not found'));
     } catch (e) {
@@ -365,9 +219,7 @@ class FirebaseAuthRepository implements AuthRepository {
   Future<Either<Failure, void>> signOut() async {
     try {
       await _firebaseAuth.signOut();
-      if (_isGoogleSignInInitialized) {
-        await GoogleSignIn.instance.disconnect();
-      }
+      if (_isGoogleSignInInitialized) await GoogleSignIn.instance.disconnect();
       return const Right(null);
     } catch (e) {
       return Left(FirebaseErrorHandler.handleGenericError(e));

@@ -1,3 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart'; // <--- add this
+
+
 class User {
   final String id;
   final String email;
@@ -62,8 +65,8 @@ class User {
       photoUrl: map['photoUrl'],
       phoneNumber: map['phoneNumber'],
       activeRole: map['activeRole'] ?? 'Find Room',
-      createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] ?? 0),
-      updatedAt: DateTime.fromMillisecondsSinceEpoch(map['updatedAt'] ?? 0),
+    createdAt: parseTimestamp(map['createdAt']),
+    updatedAt: parseTimestamp(map['updatedAt']),
     );
   }
 
@@ -92,4 +95,11 @@ class User {
         (phoneNumber?.hashCode ?? 0) ^
         activeRole.hashCode;
   }
+}
+
+DateTime parseTimestamp(dynamic value) {
+  if (value == null) return DateTime.now();
+  if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+  if (value is Timestamp) return value.toDate();
+  throw Exception('Invalid timestamp type: ${value.runtimeType}');
 }

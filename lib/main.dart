@@ -219,7 +219,7 @@ class AuthWrapper extends StatelessWidget {
 // Phone mockup widget (adapted from example)
 class _PhoneMockup extends StatelessWidget {
   final Widget child;
-  const _PhoneMockup({Key? key, required this.child}) : super(key: key);
+  const _PhoneMockup({required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -274,7 +274,7 @@ class _PhoneMockup extends StatelessWidget {
 
 // Animated background orbs (kept lightweight)
 class _AnimatedBackgroundOrbs extends StatefulWidget {
-  const _AnimatedBackgroundOrbs({Key? key}) : super(key: key);
+  const _AnimatedBackgroundOrbs();
 
   @override
   State<_AnimatedBackgroundOrbs> createState() =>

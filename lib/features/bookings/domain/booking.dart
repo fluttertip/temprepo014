@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 enum BookingStatus { pending, accepted, rejected, cancelled }
 
 class Booking {
@@ -101,34 +103,29 @@ class Booking {
     };
   }
 
-  factory Booking.fromMap(Map<String, dynamic> map) {
-    return Booking(
-      id: map['id'] ?? '',
-      roomId: map['roomId'] ?? '',
-      tenantId: map['tenantId'] ?? '',
-      landlordId: map['landlordId'] ?? '',
-      roomTitle: map['roomTitle'] ?? '',
-      roomLocation: map['roomLocation'] ?? '',
-      roomPrice: (map['roomPrice'] ?? 0.0).toDouble(),
-      tenantName: map['tenantName'] ?? '',
-      tenantPhone: map['tenantPhone'],
-      status: BookingStatus.values.firstWhere(
-        (e) => e.name == map['status'],
-        orElse: () => BookingStatus.pending,
-      ),
-      // checkInDate: DateTime.fromMillisecondsSinceEpoch(map['checkInDate'] ?? 0),
-      // checkOutDate: DateTime.fromMillisecondsSinceEpoch(
-      //   map['checkOutDate'] ?? 0,
-      // ),
-      totalAmount: (map['totalAmount'] ?? 0.0).toDouble(),
-      message: map['message'],
-      createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] ?? 0),
-      updatedAt: DateTime.fromMillisecondsSinceEpoch(map['updatedAt'] ?? 0),
-      responseDate: map['responseDate'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(map['responseDate'])
-          : null,
-    );
-  }
+factory Booking.fromMap(Map<String, dynamic> map) {
+  return Booking(
+    id: map['id'] ?? '',
+    roomId: map['roomId'] ?? '',
+    tenantId: map['tenantId'] ?? '',
+    landlordId: map['landlordId'] ?? '',
+    roomTitle: map['roomTitle'] ?? '',
+    roomLocation: map['roomLocation'] ?? '',
+    roomPrice: (map['roomPrice'] ?? 0.0).toDouble(),
+    tenantName: map['tenantName'] ?? '',
+    tenantPhone: map['tenantPhone'],
+    status: BookingStatus.values.firstWhere(
+      (e) => e.name == map['status'],
+      orElse: () => BookingStatus.pending,
+    ),
+    totalAmount: (map['totalAmount'] ?? 0.0).toDouble(),
+    message: map['message'],
+    createdAt: parseTimestamp(map['createdAt']),
+    updatedAt: parseTimestamp(map['updatedAt']),
+    responseDate: map['responseDate'] != null ? parseTimestamp(map['responseDate']) : null,
+  );
+}
+
 
   @override
   String toString() {
@@ -146,4 +143,11 @@ class Booking {
   int get hashCode {
     return id.hashCode;
   }
+}
+
+DateTime parseTimestamp(dynamic value) {
+  if (value == null) return DateTime.now();
+  if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+  if (value is Timestamp) return value.toDate();
+  throw Exception('Invalid timestamp type: ${value.runtimeType}');
 }

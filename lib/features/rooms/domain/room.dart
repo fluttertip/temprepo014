@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Room {
   final String id;
   final String title;
@@ -116,8 +118,8 @@ class Room {
       isAvailable: map['isAvailable'] ?? true,
       rating: map['rating']?.toDouble(),
       reviewCount: map['reviewCount'] ?? 0,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] ?? 0),
-      updatedAt: DateTime.fromMillisecondsSinceEpoch(map['updatedAt'] ?? 0),
+      createdAt: parseTimestamp(map['createdAt']),
+      updatedAt: parseTimestamp(map['updatedAt']),
     );
   }
 
@@ -137,3 +139,11 @@ class Room {
     return id.hashCode;
   }
 }
+
+DateTime parseTimestamp(dynamic value) {
+  if (value == null) return DateTime.now();
+  if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+  if (value is Timestamp) return value.toDate();
+  throw Exception('Invalid timestamp type: ${value.runtimeType}');
+}
+

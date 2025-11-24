@@ -23,24 +23,38 @@ class AuthProvider extends ChangeNotifier {
 
   void _listenToAuthChanges() {
     _authRepository.authStateChanges.listen(
-      (User? user) {
-        print('Auth state changed: ${user?.email ?? 'null'}');
-        _user = user;
-        if (_state == AuthState.loading) {
-          _state = user != null
-              ? AuthState.authenticated
-              : AuthState.unauthenticated;
-          _errorMessage = null;
-          notifyListeners();
-        }
-      },
-      onError: (error) {
-        print('Auth state change error: $error');
-        if (_state == AuthState.loading) {
-          _setState(AuthState.error, 'Authentication error: $error');
-        }
-      },
-    );
+  (User? user) {
+    print('Auth state changed: ${user?.email ?? 'null'}');
+    _user = user;
+    _state = user != null ? AuthState.authenticated : AuthState.unauthenticated;
+    _errorMessage = null; // clear previous error
+    notifyListeners();
+  },
+  onError: (error) {
+    print('Auth state change error: $error');
+    _setState(AuthState.error, 'Authentication error: $error');
+  },
+);
+
+    // _authRepository.authStateChanges.listen(
+    //   (User? user) {
+    //     print('Auth state changed: ${user?.email ?? 'null'}');
+    //     _user = user;
+    //     if (_state == AuthState.loading) {
+    //       _state = user != null
+    //           ? AuthState.authenticated
+    //           : AuthState.unauthenticated;
+    //       _errorMessage = null;
+    //       notifyListeners();
+    //     }
+    //   },
+    //   onError: (error) {
+    //     print('Auth state change error: $error');
+    //     if (_state == AuthState.loading) {
+    //       _setState(AuthState.error, 'Authentication error: $error');
+    //     }
+    //   },
+    // );
   }
 
   Future<void> _initializeAuth() async {
@@ -62,16 +76,21 @@ class AuthProvider extends ChangeNotifier {
     try {
       final result = await _authRepository.signInWithGoogle();
       result.fold(
-        (failure) {
-          print('Sign-in failed: ${failure.message}');
-          _setState(AuthState.error, failure.message);
-        },
-        (user) {
-          print('Sign-in successful: ${user.email}');
-          // Don't set state here, let authStateChanges handle it
-          _errorMessage = null;
-        },
-      );
+  (failure) => _setState(AuthState.error, failure.message),
+  (user) => _setState(AuthState.authenticated, null, user),
+);
+
+      // result.fold(
+      //   (failure) {
+      //     print('Sign-in failed: ${failure.message}');
+      //     _setState(AuthState.error, failure.message);
+      //   },
+      //   (user) {
+      //     print('Sign-in successful: ${user.email}');
+      //     // Don't set state here, let authStateChanges handle it
+      //     _errorMessage = null;
+      //   },
+      // );
     } catch (e) {
       print('Sign-in exception: $e');
       _setState(AuthState.error, 'Sign in failed: ${e.toString()}');
@@ -122,12 +141,9 @@ class AuthProvider extends ChangeNotifier {
   }
 
   void clearError() {
-    _errorMessage = null;
-    if (_state == AuthState.error) {
-      _state = _user != null
-          ? AuthState.authenticated
-          : AuthState.unauthenticated;
-    }
-    notifyListeners();
-  }
+  _errorMessage = null;
+  _state = _user != null ? AuthState.authenticated : AuthState.unauthenticated;
+  notifyListeners();
+}
+
 }

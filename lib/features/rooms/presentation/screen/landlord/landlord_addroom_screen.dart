@@ -102,7 +102,7 @@ class _LandlordAddRoomScreenState extends State<LandlordAddRoomScreen> {
                                     labelText: 'Location *',
                                     border: OutlineInputBorder(),
                                   ),
-                                  value: _selectedLocation,
+                                  initialValue: _selectedLocation,
                                   validator: (value) => value == null
                                       ? 'Location is required'
                                       : null,
@@ -123,7 +123,7 @@ class _LandlordAddRoomScreenState extends State<LandlordAddRoomScreen> {
                                     labelText: 'Room Type *',
                                     border: OutlineInputBorder(),
                                   ),
-                                  value: _selectedType,
+                                  initialValue: _selectedType,
                                   validator: (value) =>
                                       value == null ? 'Type is required' : null,
                                   items: AppConstants.roomTypes.map((type) {
@@ -147,7 +147,7 @@ class _LandlordAddRoomScreenState extends State<LandlordAddRoomScreen> {
                                       labelText: 'Location *',
                                       border: OutlineInputBorder(),
                                     ),
-                                    value: _selectedLocation,
+                                    initialValue: _selectedLocation,
                                     validator: (value) => value == null
                                         ? 'Location is required'
                                         : null,
@@ -171,7 +171,7 @@ class _LandlordAddRoomScreenState extends State<LandlordAddRoomScreen> {
                                       labelText: 'Room Type *',
                                       border: OutlineInputBorder(),
                                     ),
-                                    value: _selectedType,
+                                    initialValue: _selectedType,
                                     validator: (value) => value == null
                                         ? 'Type is required'
                                         : null,
@@ -218,10 +218,12 @@ class _LandlordAddRoomScreenState extends State<LandlordAddRoomScreen> {
                         ),
                         keyboardType: TextInputType.number,
                         validator: (value) {
-                          if (value?.isEmpty ?? true)
+                          if (value?.isEmpty ?? true) {
                             return 'Price is required';
-                          if (double.tryParse(value!) == null)
+                          }
+                          if (double.tryParse(value!) == null) {
                             return 'Enter valid price';
+                          }
                           return null;
                         },
                       ),
