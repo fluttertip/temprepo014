@@ -74,21 +74,22 @@ class MyApp extends StatelessWidget {
         builder: (context, child) {
           return LayoutBuilder(
             builder: (context, constraints) {
-              final isWebDesktop = constraints.maxWidth > 800;
               final isMobile = constraints.maxWidth < 600;
 
-              if (isWebDesktop && !isMobile) {
-                // Desktop/web view - show phone mockup + animated background
+              if (isMobile) {
+                // Mobile/tablet view - show full app
+                return child!;
+              } else {
+                // Desktop/web view - show phone mockup with clean layout
                 return Scaffold(
-                  backgroundColor: const Color(0xFF0F0F1E),
                   body: Container(
                     width: double.infinity,
                     height: double.infinity,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: const [
+                        colors: [
                           Color(0xFF0F0F1E),
                           Color(0xFF1A1A2E),
                           Color(0xFF16213E),
@@ -97,79 +98,49 @@ class MyApp extends StatelessWidget {
                         stops: [0.0, 0.3, 0.7, 1.0],
                       ),
                     ),
-                    child: Stack(
+                    child: Row(
                       children: [
-                        const _AnimatedBackgroundOrbs(),
-                        Row(
-                          children: [
-                            // Center - Phone mockup
-                            Expanded(
-                              flex: 2,
-                              child: Center(
-                                child: _PhoneMockup(
-                                  child: child ?? const SizedBox.shrink(),
-                                ),
+                        // LEFT: zoom out message
+                        Expanded(
+                          child: Center(
+                            child: Text(
+                              "zoom out browser to 67% for better view",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white.withOpacity(0.7),
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
+                          ),
+                        ),
 
-                            // Info message on right
-                            Expanded(
-                              flex: 1,
-                              child: Center(
-                                child: Container(
-                                  padding: const EdgeInsets.all(24),
-                                  margin: const EdgeInsets.symmetric(
-                                    horizontal: 32,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.06),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: Colors.white.withOpacity(0.08),
-                                      width: 1.2,
-                                    ),
-                                  ),
-                                  child: const Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.info_outline_rounded,
-                                        color: Color(0xFF667EEA),
-                                        size: 48,
-                                      ),
-                                      SizedBox(height: 16),
-                                      Text(
-                                        'Zoom out your browser - 67%',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      SizedBox(height: 12),
-                                      Text(
-                                        'All features may not work properly on the web version.',
-                                        style: TextStyle(
-                                          color: Colors.white70,
-                                          fontSize: 13,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                        // CENTER: phone mockup
+                        Expanded(
+                          flex: 2,
+                          child: Center(
+                            child: _PhoneMockup(child: child!),
+                          ),
+                        ),
+
+                        // RIGHT: Made by text
+                        Expanded(
+                          child: Center(
+                            child: Text(
+                              "Made by Niranjan Dahal",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white.withOpacity(0.6),
+                                fontWeight: FontWeight.normal,
                               ),
                             ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
                   ),
                 );
-              } else {
-                // Mobile/tablet view or narrow web view - show full app
-                return child!;
               }
             },
           );
@@ -216,7 +187,7 @@ class AuthWrapper extends StatelessWidget {
   }
 }
 
-// Phone mockup widget (adapted from example)
+// Phone mockup widget
 class _PhoneMockup extends StatelessWidget {
   final Widget child;
   const _PhoneMockup({required this.child});
@@ -231,37 +202,43 @@ class _PhoneMockup extends StatelessWidget {
       height: frameHeight,
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(50.0),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.35),
-              blurRadius: 30,
-              spreadRadius: 6,
+              color: const Color(0xFF667EEA).withOpacity(0.25),
+              blurRadius: 40.0,
+              offset: const Offset(-10, 10),
+            ),
+            BoxShadow(
+              color: const Color(0xFF764BA2).withOpacity(0.25),
+              blurRadius: 40.0,
+              offset: const Offset(10, 10),
             ),
           ],
         ),
         child: Stack(
           children: [
-            // Bezel/frame
             Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(25.0),
-                color: Colors.black,
-                border: Border.all(width: 8.0, color: const Color(0xFF1A1A1A)),
+                borderRadius: BorderRadius.circular(50.0),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF2C2C3E),
+                    Color(0xFF1C1C2E),
+                    Color(0xFF0F0F1E),
+                  ],
+                ),
+                border: Border.all(width: 12.0, color: const Color(0xFF1A1A2E)),
               ),
             ),
-
-            // Screen content
             Center(
               child: Container(
-                margin: const EdgeInsets.all(12.0),
+                margin: const EdgeInsets.all(20.0),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16.0),
-                  child: SizedBox(
-                    width: frameWidth - 40,
-                    height: frameHeight - 40,
-                    child: child,
-                  ),
+                  borderRadius: BorderRadius.circular(38.0),
+                  child: child,
                 ),
               ),
             ),
@@ -271,6 +248,7 @@ class _PhoneMockup extends StatelessWidget {
     );
   }
 }
+
 
 // Animated background orbs (kept lightweight)
 class _AnimatedBackgroundOrbs extends StatefulWidget {
