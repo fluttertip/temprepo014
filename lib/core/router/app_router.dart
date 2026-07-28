@@ -60,13 +60,13 @@ class AppRouter {
       GoRoute(
         path: '${AppRoutes.roomDetail}/:id',
         builder: (context, state) {
-          // Prefer the Room passed via extra (instant, has full data); fall
-          // back to id-only for deep links (detail screen fetches by id).
+          // Prefer the Room passed via extra (instant, has full data).
+          // If not available (deep link), fall back to home for now.
           final extra = state.extra;
           if (extra is Room) {
             return TenantRoomDetailScreen(room: extra);
           }
-          return TenantRoomDetailScreen(roomId: state.pathParameters['id']);
+          return const HomeShell();
         },
       ),
     ],

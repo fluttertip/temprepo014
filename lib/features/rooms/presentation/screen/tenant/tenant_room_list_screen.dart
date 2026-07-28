@@ -82,7 +82,7 @@ class _TenantRoomListScreenState extends State<TenantRoomListScreen> {
   Widget _header(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.sm),
+          AppSpacing.lg, AppSpacing.xl, AppSpacing.lg, AppSpacing.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -171,39 +171,14 @@ class _TenantRoomListScreenState extends State<TenantRoomListScreen> {
             ),
           ];
         }
-        final width = MediaQuery.sizeOf(context).width;
-        // final columns = width >= AppBreakpoints.desktop
-        //     ? 3
-        //     : width >= AppBreakpoints.tablet
-        //         ? 2
-        //         : 1;
-        final columns = 1;
         final myId = auth.user?.id;
 
-        if (columns == 1) {
-          return [
-            SliverPadding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              sliver: SliverList.separated(
-                itemCount: rooms.length,
-                separatorBuilder: (_, __) =>
-                    const SizedBox(height: AppSpacing.lg),
-                itemBuilder: (_, i) => _card(rooms[i], provider, myId),
-              ),
-            ),
-          ];
-        }
         return [
           SliverPadding(
             padding: const EdgeInsets.all(AppSpacing.lg),
-            sliver: SliverGrid.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: columns,
-                mainAxisSpacing: AppSpacing.lg,
-                crossAxisSpacing: AppSpacing.lg,
-                mainAxisExtent: 340,
-              ),
+            sliver: SliverList.separated(
               itemCount: rooms.length,
+              separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.lg),
               itemBuilder: (_, i) => _card(rooms[i], provider, myId),
             ),
           ),

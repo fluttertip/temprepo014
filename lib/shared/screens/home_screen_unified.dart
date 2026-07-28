@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import '../../features/auth/presentation/auth_provider.dart';
 import 'dart:ui';
 import '../../core/constants/app_constants.dart';
+import 'package:kothakhoj/shared/widgets/role_switcher.dart';
 
 class HomeScreenUnified extends StatefulWidget {
   const HomeScreenUnified({super.key});
@@ -48,7 +49,14 @@ class _HomeScreenUnifiedState extends State<HomeScreenUnified> {
           appBar: shouldShowAppBar
               ? AppBar(
                   toolbarHeight: 90,
-
+                  centerTitle: true,
+                  title: Padding(
+                    padding: const EdgeInsets.only(top: 12.0),
+                    child: RoleSwitcher(
+                      activeRole: user.activeRole,
+                      onChanged: (newRole) => authProvider.switchRole(newRole),
+                    ),
+                  ),
                   backgroundColor: Colors.white.withOpacity(
                     0.95,
                   ), // Slightly transparent
@@ -73,15 +81,6 @@ class _HomeScreenUnifiedState extends State<HomeScreenUnified> {
                     ),
                   ),
                   actions: [
-                    // Compact role switcher
-                    _RoleSwitcher(
-                      activeRole: user.activeRole,
-                      onRoleChanged: (newRole) {
-                        authProvider.switchRole(newRole);
-                      },
-                    ),
-                    const SizedBox(width: 12),
-
                     // User menu
                     PopupMenuButton<String>(
                       onSelected: (value) {
@@ -112,7 +111,7 @@ class _HomeScreenUnifiedState extends State<HomeScreenUnified> {
                         ),
                       ],
                       child: CircleAvatar(
-                        radius: 18, // Smaller avatar
+                        radius: 18,
                         backgroundImage: user.photoUrl != null
                             ? NetworkImage(user.photoUrl!)
                             : null,
@@ -220,200 +219,3 @@ class _HomeScreenUnifiedState extends State<HomeScreenUnified> {
   }
 }
 
-class _RoleSwitcher extends StatelessWidget {
-  final String activeRole;
-  final ValueChanged<String> onRoleChanged;
-
-  const _RoleSwitcher({required this.activeRole, required this.onRoleChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    // Get the actual screen width, not the constrained width
-    final screenWidth =
-        View.of(context).physicalSize.width / View.of(context).devicePixelRatio;
-    final containerWidth = screenWidth > 600 ? 280.0 : screenWidth * 0.75;
-    return Container(
-      width: containerWidth,
-      height: 52,
-      decoration: BoxDecoration(
-        // Enhanced glassmorphic effect
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withOpacity(0.9),
-            Colors.white.withOpacity(0.7),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(
-          color: Colors.grey.withOpacity(0.2), // More visible border
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(26),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(26),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(3),
-              child: Stack(
-                children: [
-                  // Enhanced sliding indicator
-                  AnimatedAlign(
-                    duration: const Duration(milliseconds: 400),
-                    curve: Curves.elasticOut,
-                    alignment: activeRole == "Find Room"
-                        ? Alignment.centerLeft
-                        : Alignment.centerRight,
-                    child: Container(
-                      // width: MediaQuery.sizeOf(context).width * 0.75 / 2 - 6,
-                      width:
-                          (containerWidth - 12) /
-                          2, // Calculate based on container width
-
-                      height: 46,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Theme.of(context).colorScheme.primary,
-                            Theme.of(
-                              context,
-                            ).colorScheme.primary.withOpacity(0.8),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(23),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.primary.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Button options
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _SwitcherOption(
-                          label: "Find Room",
-                          isActive: activeRole == "Find Room",
-                          onTap: () => onRoleChanged("Find Room"),
-                          icon: Icons.search_rounded,
-                        ),
-                      ),
-                      Expanded(
-                        child: _SwitcherOption(
-                          label: "Rent Room",
-                          isActive: activeRole == "Rent Room",
-                          onTap: () => onRoleChanged("Rent Room"),
-                          icon: Icons.add_home_outlined,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SwitcherOption extends StatelessWidget {
-  final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-  final IconData icon;
-
-  const _SwitcherOption({
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 46,
-        width: 50,
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(23)),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(23),
-            splashColor: isActive
-                ? Colors.white.withOpacity(0.2)
-                : Colors.grey.withOpacity(0.1),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AnimatedScale(
-                    scale: isActive ? 1.1 : 1.0,
-                    duration: const Duration(milliseconds: 300),
-                    child: Icon(
-                      icon,
-                      size: 18,
-                      color: isActive ? Colors.white : Colors.grey[700],
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: AnimatedDefaultTextStyle(
-                      duration: const Duration(milliseconds: 300),
-                      style: TextStyle(
-                        color: isActive ? Colors.white : Colors.grey[700],
-                        fontWeight: isActive
-                            ? FontWeight.w700
-                            : FontWeight.w600,
-                        fontSize: 13,
-                        letterSpacing: 0.3,
-                      ),
-                      child: Text(
-                        label,
-                        textAlign: TextAlign.center,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

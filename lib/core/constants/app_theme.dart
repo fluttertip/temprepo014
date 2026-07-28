@@ -1,37 +1,30 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Primary Colors
-  static const Color primaryColor = Color(0xFF2E7D32); // Green
-  static const Color primaryColorDark = Color(0xFF1B5E20);
-  static const Color primaryColorLight = Color(0xFF4CAF50);
+  static const Color primaryColor = Color(0xFF0E7C66);
+  static const Color primaryColorDark = Color(0xFF0A5E4D);
+  static const Color primaryColorLight = Color(0xFF2AA98C);
 
-  // Secondary Colors
-  static const Color secondaryColor = Color(0xFF00ACC1); // Cyan
-  static const Color secondaryColorDark = Color(0xFF00838F);
-  static const Color secondaryColorLight = Color(0xFF26C6DA);
+  static const Color secondaryColor = Color(0xFFFF6B57);
+  static const Color secondaryColorDark = Color(0xFFE04F35);
+  static const Color secondaryColorLight = Color(0xFFFF8F7A);
 
-  // Background Colors
-  static const Color backgroundColor = Color(0xFFF5F5F5);
+  static const Color backgroundColor = Color(0xFFF7F8F8);
   static const Color surfaceColor = Color(0xFFFFFFFF);
   static const Color cardColor = Color(0xFFFFFFFF);
 
-  // Text Colors
-  static const Color textPrimary = Color(0xFF212121);
-  static const Color textSecondary = Color(0xFF757575);
-  static const Color textLight = Color(0xFFBDBDBD);
+  static const Color textPrimary = Color(0xFF121616);
+  static const Color textSecondary = Color(0xFF4A5151);
+  static const Color textLight = Color(0xFF9BA3A3);
 
-  // Status Colors
-  static const Color successColor = Color(0xFF4CAF50);
-  static const Color errorColor = Color(0xFFF44336);
-  static const Color warningColor = Color(0xFFFF9800);
-  static const Color infoColor = Color(0xFF2196F3);
+  static const Color successColor = Color(0xFF2E9E5B);
+  static const Color errorColor = Color(0xFFE5484D);
+  static const Color warningColor = Color(0xFFF0A400);
+  static const Color infoColor = Color(0xFF3E7BFA);
 
-  // Role Colors
-  static const Color tenantColor = Color.fromARGB(255, 0, 128, 255);
-  static const Color landlordColor = Color.fromARGB(255, 255, 89, 0);
+  static const Color tenantColor = Color(0xFF3E7BFA);
+  static const Color landlordColor = Color(0xFFFF7A00);
 
-  // Rating Color
   static const Color ratingColor = Color(0xFFFFB300);
 }
 

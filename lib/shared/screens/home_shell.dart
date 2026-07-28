@@ -42,8 +42,8 @@ class _HomeShellState extends State<HomeShell> {
         final index = _index.clamp(0, tabs.length - 1);
 
         final width = MediaQuery.sizeOf(context).width;
-        // final wide = width >= AppBreakpoints.tablet;
-        const wide = false;
+        final wide = width >= AppBreakpoints.tablet;
+        // const wide = false;
 
         final body = IndexedStack(
           index: index,
@@ -51,59 +51,42 @@ class _HomeShellState extends State<HomeShell> {
         );
 
         return Scaffold(
+          backgroundColor: context.scheme.surface,
           appBar: AppBar(
+            toolbarHeight: 96,
+            automaticallyImplyLeading: false,
             titleSpacing: AppSpacing.lg,
-            title: RoleSwitcher(
-              activeRole: user.activeRole,
-              onChanged: auth.switchRole,
-            ),
-            actions: [const _ProfileMenu(), const SizedBox(width: AppSpacing.sm)],
-          ),
-          body: 
-          // wide
-          //     ? Row(
-          //         children: [
-          //           NavigationRail(
-          //             selectedIndex: index,
-          //             onDestinationSelected: (i) => setState(() => _index = i),
-          //             labelType: NavigationRailLabelType.all,
-          //             destinations: [
-          //               for (final t in tabs)
-          //                 NavigationRailDestination(
-          //                   icon: Icon(t.icon),
-          //                   selectedIcon: Icon(t.activeIcon),
-          //                   label: Text(t.label),
-          //                 ),
-          //             ],
-          //           ),
-          //           const VerticalDivider(width: 1),
-          //           Expanded(
-          //             child: Center(
-          //               child: ConstrainedBox(
-          //                 constraints:
-          //                     const BoxConstraints(maxWidth: AppBreakpoints.desktop),
-          //                 child: body,
-          //               ),
-          //             ),
-          //           ),
-          //         ],
-          //       )
-              // : 
-              body,
-          bottomNavigationBar: wide
-              ? null
-              : NavigationBar(
-                  selectedIndex: index,
-                  onDestinationSelected: (i) => setState(() => _index = i),
-                  destinations: [
-                    for (final t in tabs)
-                      NavigationDestination(
-                        icon: Icon(t.icon),
-                        selectedIcon: Icon(t.activeIcon),
-                        label: t.label,
-                      ),
-                  ],
+            backgroundColor: context.scheme.surface,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            title: Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.sm),
+              child: SizedBox(
+                width: 220,
+                child: RoleSwitcher(
+                  activeRole: user.activeRole,
+                  onChanged: auth.switchRole,
                 ),
+              ),
+            ),
+            actions: [
+              const _ProfileMenu(),
+              const SizedBox(width: AppSpacing.md),
+            ],
+          ),
+          body: SafeArea(child: body),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: index,
+            onDestinationSelected: (i) => setState(() => _index = i),
+            destinations: [
+              for (final t in tabs)
+                NavigationDestination(
+                  icon: Icon(t.icon),
+                  selectedIcon: Icon(t.activeIcon),
+                  label: t.label,
+                ),
+            ],
+          ),
         );
       },
     );

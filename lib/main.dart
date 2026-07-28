@@ -88,188 +88,73 @@ class _AppViewState extends State<_AppView> {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: themeController.mode,
+      themeMode: ThemeMode.light,
       routerConfig: _appRouter.router,
 
       builder: (context, child) {
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final isMobile = constraints.maxWidth < 700;
+        final scheme = Theme.of(context).colorScheme;
+        final screenSize = MediaQuery.of(context).size;
+        final phoneHeight = screenSize.height - 40;
 
-            if (isMobile) {
-              return child!;
-            }
-
-            final scheme = Theme.of(context).colorScheme;
-
-            return Scaffold(
-              body: Container(
-                width: double.infinity,
-                height: double.infinity,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      scheme.primary,
-                      scheme.primary.withOpacity(.85),
-                      scheme.surface,
+        return Container(
+          color: scheme.surface,
+          child: SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 430),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: scheme.surface,
+                    borderRadius: BorderRadius.circular(40),
+                    border: Border.all(color: Colors.black12, width: 1.5),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 24,
+                        offset: Offset(0, 10),
+                      ),
                     ],
                   ),
-                ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 60),
-                    child: Row(
-                      children: [
-                          /// LEFT
-  Expanded(
-    child: Center(
-      child: Text(
-        "Zoom out browser to 67% for better view",
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: Colors.black,
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    ),
-  ),
-
-  /// PHONE
-  SizedBox(
-    width: 460,
-    child: Center(
-      child: _PhoneMockup(
-        child: child!,
-      ),
-    ),
-  ),
-
-  /// RIGHT
-  Expanded(
-    child: Center(
-      child: Text(
-        "Made by Niranjan Dahal",
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color:Colors.black,
-          fontSize: 16,
-        ),
-      ),
-    ),
-  ),
-                      ],
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(40),
+                    child: SizedBox(
+                      height: phoneHeight.clamp(600.0, 920.0),
+                      child: Column(
+                        children: [
+                          Container(
+                            height: 30,
+                            decoration: BoxDecoration(
+                              color: scheme.surface,
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(40),
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: Container(
+                              width: 110,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: Colors.black26,
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Material(
+                              color: scheme.surface,
+                              child: child ?? const SizedBox.shrink(),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-class _FeatureChip extends StatelessWidget {
-  const _FeatureChip({
-    required this.icon,
-    required this.text,
-  });
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 18,
-        vertical: 12,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(.12),
-        borderRadius: BorderRadius.circular(50),
-        border: Border.all(
-          color: Colors.white.withOpacity(.15),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: scheme.onPrimary, size: 18),
-          const SizedBox(width: 8),
-          Text(
-            text,
-            style: TextStyle(
-              color: scheme.onPrimary,
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PhoneMockup extends StatelessWidget {
-  const _PhoneMockup({
-    required this.child,
-  });
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
-    return SizedBox(
-      width: 430,
-      height: 900,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(48),
-          boxShadow: [
-            BoxShadow(
-              color: scheme.primary.withOpacity(.30),
-              blurRadius: 45,
-              spreadRadius: 6,
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(48),
-                gradient: LinearGradient(
-                  colors: [
-                    scheme.primary.withOpacity(.30),
-                    Colors.black87,
-                    Colors.black,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                border: Border.all(
-                  color: Colors.white.withOpacity(.12),
-                  width: 10,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(18),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(34),
-                child: child,
-              ),
-            ),
-          ],
-        ),
-      ),
+        );
+      },
     );
   }
 }
