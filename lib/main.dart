@@ -1,218 +1,242 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:kothakhoj/features/bookings/presentation/provider/booking_provider.dart';
-import 'package:kothakhoj/features/rooms/presentation/provider/room_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'core/config/app_config.dart';
+import 'core/router/app_router.dart';
+import 'core/theme/app_theme.dart';
+import 'core/theme/theme_controller.dart';
 import 'features/auth/data/firebase_auth_repository.dart';
+import 'features/auth/domain/auth_repository.dart';
 import 'features/auth/presentation/auth_provider.dart';
-import 'features/auth/presentation/auth_screen.dart';
-import 'shared/screens/home_screen_unified.dart';
-import 'features/rooms/data/firebase_room_repository.dart';
 import 'features/bookings/data/firebase_booking_repository.dart';
-import 'core/constants/app_theme.dart';
+import 'features/bookings/domain/booking_repository.dart';
+import 'features/bookings/presentation/provider/booking_provider.dart';
+import 'features/rooms/data/firebase_room_repository.dart';
+import 'features/rooms/domain/room_repository.dart';
+import 'features/rooms/presentation/provider/room_provider.dart';
+import 'firebase_options.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  AppConfig.assertValid();
 
-  // Lock app to portrait only
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  // v1 locked to portrait; v2 is responsive so we allow all orientations and
+  // let layout adapt. (Remove this line entirely for default behavior.)
+
+  final prefs = await SharedPreferences.getInstance();
 
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    // ignore: avoid_print
-    print('Firebase initialized successfully');
   } catch (e) {
-    // ignore: avoid_print
-    print('Firebase initialization error: $e');
+    debugPrint('Firebase init error: $e');
   }
 
-  runApp(const MyApp());
+  runApp(KothaKhojApp(prefs: prefs));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class KothaKhojApp extends StatelessWidget {
+  const KothaKhojApp({super.key, required this.prefs});
+  final SharedPreferences prefs;
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // Repositories
-        Provider<FirebaseAuthRepository>(
-          create: (_) => FirebaseAuthRepository(),
+        // Repositories exposed via their domain interfaces (DIP) so providers
+        // depend on abstractions, not Firebase concretions — easy to test/mock.
+        Provider<AuthRepository>(create: (_) => FirebaseAuthRepository()),
+        Provider<RoomRepository>(create: (_) => FirebaseRoomRepository()),
+        Provider<BookingRepository>(create: (_) => FirebaseBookingRepository()),
+        ChangeNotifierProvider(create: (_) => ThemeController(prefs)),
+        ChangeNotifierProvider(
+          create: (c) => AuthProvider(c.read<AuthRepository>()),
         ),
-        Provider<FirebaseRoomRepository>(
-          create: (_) => FirebaseRoomRepository(),
+        ChangeNotifierProvider(
+          create: (c) => RoomProvider(c.read<RoomRepository>()),
         ),
-        Provider<FirebaseBookingRepository>(
-          create: (_) => FirebaseBookingRepository(),
-        ),
-
-        // Providers
-        ChangeNotifierProvider<AuthProvider>(
-          create: (context) =>
-              AuthProvider(context.read<FirebaseAuthRepository>()),
-        ),
-        ChangeNotifierProvider<RoomProvider>(
-          create: (context) =>
-              RoomProvider(context.read<FirebaseRoomRepository>()),
-        ),
-        ChangeNotifierProvider<BookingProvider>(
-          create: (context) =>
-              BookingProvider(context.read<FirebaseBookingRepository>()),
+        ChangeNotifierProvider(
+          create: (c) => BookingProvider(c.read<BookingRepository>()),
         ),
       ],
-      child: MaterialApp(
-        theme: AppTheme.lightTheme,
-        debugShowCheckedModeBanner: false,
-        builder: (context, child) {
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              final isMobile = constraints.maxWidth < 600;
-
-              if (isMobile) {
-                // Mobile/tablet view - show full app
-                return child!;
-              } else {
-                // Desktop/web view - show phone mockup with clean layout
-                return Scaffold(
-                  body: Container(
-                    width: double.infinity,
-                    height: double.infinity,
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFF0F0F1E),
-                          Color(0xFF1A1A2E),
-                          Color(0xFF16213E),
-                          Color(0xFF0F0F1E),
-                        ],
-                        stops: [0.0, 0.3, 0.7, 1.0],
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        // LEFT: zoom out message
-                        Expanded(
-                          child: Center(
-                            child: Text(
-                              "zoom out browser to 67% for better view",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white.withOpacity(0.7),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        // CENTER: phone mockup
-                        Expanded(
-                          flex: 2,
-                          child: Center(
-                            child: _PhoneMockup(child: child!),
-                          ),
-                        ),
-
-                        // RIGHT: Made by text
-                        Expanded(
-                          child: Center(
-                            child: Text(
-                              "Made by Niranjan Dahal",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white.withOpacity(0.6),
-                                fontWeight: FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-            },
-          );
-        },
-        home: const AuthWrapper(),
-      ),
+      child: const _AppView(),
     );
   }
 }
 
-class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key});
+class _AppView extends StatefulWidget {
+  const _AppView();
+
+  @override
+  State<_AppView> createState() => _AppViewState();
+}
+
+class _AppViewState extends State<_AppView> {
+  late final AppRouter _appRouter = AppRouter(
+    context.read<AuthProvider>(),
+  );
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AuthProvider>(
-      builder: (context, authProvider, child) {
-        // Check authentication status on startup
-        if (authProvider.state == AuthState.initial) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            authProvider.checkAuthStatus();
-          });
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
+    final themeController = context.watch<ThemeController>();
 
-        // Show loading screen
-        if (authProvider.state == AuthState.loading) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
+    return MaterialApp.router(
+      title: AppConfig.appName,
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: themeController.mode,
+      routerConfig: _appRouter.router,
 
-        // Show home screen if authenticated
-        if (authProvider.isAuthenticated) {
-          return const HomeScreenUnified();
-        }
+      builder: (context, child) {
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isMobile = constraints.maxWidth < 700;
 
-        // Show auth screen if not authenticated
-        return const AuthScreen();
+            if (isMobile) {
+              return child!;
+            }
+
+            final scheme = Theme.of(context).colorScheme;
+
+            return Scaffold(
+              body: Container(
+                width: double.infinity,
+                height: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      scheme.primary,
+                      scheme.primary.withOpacity(.85),
+                      scheme.surface,
+                    ],
+                  ),
+                ),
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 60),
+                    child: Row(
+                      children: [
+                          /// LEFT
+  Expanded(
+    child: Center(
+      child: Text(
+        "Zoom out browser to 67% for better view",
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+  ),
+
+  /// PHONE
+  SizedBox(
+    width: 460,
+    child: Center(
+      child: _PhoneMockup(
+        child: child!,
+      ),
+    ),
+  ),
+
+  /// RIGHT
+  Expanded(
+    child: Center(
+      child: Text(
+        "Made by Niranjan Dahal",
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color:Colors.black,
+          fontSize: 16,
+        ),
+      ),
+    ),
+  ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
       },
     );
   }
 }
 
-// Phone mockup widget
-class _PhoneMockup extends StatelessWidget {
-  final Widget child;
-  const _PhoneMockup({required this.child});
+class _FeatureChip extends StatelessWidget {
+  const _FeatureChip({
+    required this.icon,
+    required this.text,
+  });
+
+  final IconData icon;
+  final String text;
 
   @override
   Widget build(BuildContext context) {
-    const frameWidth = 440.0;
-    const frameHeight = 920.0;
+    final scheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 18,
+        vertical: 12,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(.12),
+        borderRadius: BorderRadius.circular(50),
+        border: Border.all(
+          color: Colors.white.withOpacity(.15),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: scheme.onPrimary, size: 18),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: TextStyle(
+              color: scheme.onPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PhoneMockup extends StatelessWidget {
+  const _PhoneMockup({
+    required this.child,
+  });
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
 
     return SizedBox(
-      width: frameWidth,
-      height: frameHeight,
-      child: Container(
+      width: 430,
+      height: 900,
+      child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(50.0),
+          borderRadius: BorderRadius.circular(48),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF667EEA).withOpacity(0.25),
-              blurRadius: 40.0,
-              offset: const Offset(-10, 10),
-            ),
-            BoxShadow(
-              color: const Color(0xFF764BA2).withOpacity(0.25),
-              blurRadius: 40.0,
-              offset: const Offset(10, 10),
+              color: scheme.primary.withOpacity(.30),
+              blurRadius: 45,
+              spreadRadius: 6,
             ),
           ],
         ),
@@ -220,147 +244,32 @@ class _PhoneMockup extends StatelessWidget {
           children: [
             Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(50.0),
-                gradient: const LinearGradient(
+                borderRadius: BorderRadius.circular(48),
+                gradient: LinearGradient(
+                  colors: [
+                    scheme.primary.withOpacity(.30),
+                    Colors.black87,
+                    Colors.black,
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFF2C2C3E),
-                    Color(0xFF1C1C2E),
-                    Color(0xFF0F0F1E),
-                  ],
                 ),
-                border: Border.all(width: 12.0, color: const Color(0xFF1A1A2E)),
+                border: Border.all(
+                  color: Colors.white.withOpacity(.12),
+                  width: 10,
+                ),
               ),
             ),
-            Center(
-              child: Container(
-                margin: const EdgeInsets.all(20.0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(38.0),
-                  child: child,
-                ),
+            Padding(
+              padding: const EdgeInsets.all(18),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(34),
+                child: child,
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-
-// Animated background orbs (kept lightweight)
-class _AnimatedBackgroundOrbs extends StatefulWidget {
-  const _AnimatedBackgroundOrbs();
-
-  @override
-  State<_AnimatedBackgroundOrbs> createState() =>
-      _AnimatedBackgroundOrbsState();
-}
-
-class _AnimatedBackgroundOrbsState extends State<_AnimatedBackgroundOrbs>
-    with TickerProviderStateMixin {
-  late final AnimationController _c1;
-  late final AnimationController _c2;
-  late final AnimationController _c3;
-
-  @override
-  void initState() {
-    super.initState();
-    _c1 = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 20),
-    )..repeat();
-    _c2 = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 16),
-    )..repeat();
-    _c3 = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 24),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _c1.dispose();
-    _c2.dispose();
-    _c3.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        AnimatedBuilder(
-          animation: _c1,
-          builder: (context, _) {
-            return Positioned(
-              left: 50 + (200 * _c1.value),
-              top: 60 + (120 * (1 - _c1.value)),
-              child: Container(
-                width: 300,
-                height: 300,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFF667EEA).withOpacity(0.12),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-        AnimatedBuilder(
-          animation: _c2,
-          builder: (context, _) {
-            return Positioned(
-              right: 40 + (150 * _c2.value),
-              top: 180 + (120 * _c2.value),
-              child: Container(
-                width: 360,
-                height: 360,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFF764BA2).withOpacity(0.10),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-        AnimatedBuilder(
-          animation: _c3,
-          builder: (context, _) {
-            return Positioned(
-              left: 260 + (100 * (1 - _c3.value)),
-              bottom: 40 + (180 * _c3.value),
-              child: Container(
-                width: 320,
-                height: 320,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFF667EEA).withOpacity(0.08),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ],
     );
   }
 }

@@ -1,132 +1,63 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'auth_provider.dart';
-import '../../../shared/widgets/common_widgets.dart';
-import '../../../core/constants/app_theme.dart';
 
+import '../../../core/theme/app_dimens.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_button.dart';
+import 'auth_provider.dart';
+
+/// v2 onboarding: brand-forward hero, animated value props, and a single clear
+/// CTA. Adapts to light/dark and to wide screens (centered max-width column).
 class AuthScreen extends StatelessWidget {
   const AuthScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final scheme = context.scheme;
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.paddingL),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // App Logo/Icon
-              Container(
-                padding: const EdgeInsets.all(AppSizes.paddingL),
-                decoration: const BoxDecoration(
-                  color: AppColors.primaryColor,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.home,
-                  size: AppSizes.iconXL * 2,
-                  color: Colors.white,
-                ),
-              ),
-
-              const SizedBox(height: AppSizes.paddingXL),
-
-              // App Name
-              Text(
-                'Room Finder',
-                style: AppTextStyles.heading1.copyWith(
-                  color: AppColors.primaryColor,
-                ),
-                textAlign: TextAlign.center,
-              ),
-
-              const SizedBox(height: AppSizes.paddingM),
-
-              // Subtitle
-              Text(
-                'Find your perfect room or rent out your space',
-                style: AppTextStyles.bodyLarge.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-
-              const SizedBox(height: AppSizes.paddingXL * 2),
-
-              // Sign In Button
-              Consumer<AuthProvider>(
-                builder: (context, authProvider, child) {
-                  return Column(
-                    children: [
-                      CustomButton(
-                        text: 'Continue with Google',
-                        icon: Icons.login,
-                        isLoading: authProvider.state == AuthState.loading,
-                        onPressed: authProvider.state == AuthState.loading
-                            ? null
-                            : () => authProvider.signInWithGoogle(),
-                      ),
-
-                      if (authProvider.errorMessage != null) ...[
-                        const SizedBox(height: AppSizes.paddingM),
-                        Container(
-                          padding: const EdgeInsets.all(AppSizes.paddingM),
-                          decoration: BoxDecoration(
-                            color: AppColors.errorColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(
-                              AppSizes.radiusS,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.error_outline,
-                                color: AppColors.errorColor,
-                              ),
-                              const SizedBox(width: AppSizes.paddingS),
-                              Expanded(
-                                child: Text(
-                                  authProvider.errorMessage!,
-                                  style: AppTextStyles.bodyMedium.copyWith(
-                                    color: AppColors.errorColor,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
-                  );
-                },
-              ),
-
-              const SizedBox(height: AppSizes.paddingXL),
-
-              // Features preview
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _FeatureItem(
-                    icon: Icons.search,
-                    title: 'Find Rooms',
-                    subtitle: 'Browse & book',
-                  ),
-                  _FeatureItem(
-                    icon: Icons.home_work,
-                    title: 'Rent Rooms',
-                    subtitle: 'List & manage',
-                  ),
-                  _FeatureItem(
-                    icon: Icons.location_on,
-                    title: 'Kathmandu',
-                    subtitle: 'Local focus',
-                  ),
-                ],
-              ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              scheme.primary,
+              scheme.primary.withValues(alpha: 0.85),
+              scheme.surface,
             ],
+            stops: const [0, 0.35, 0.9],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Spacer(),
+                    _Logo(color: scheme.onPrimary),
+                    const SizedBox(height: AppSpacing.xl),
+                    Text('Find your next room',
+                        style: context.text.displaySmall
+                            ?.copyWith(color: scheme.onPrimary)),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      'Browse verified rooms, book in a tap, or list your own space.',
+                      style: context.text.bodyLarge?.copyWith(
+                          color: scheme.onPrimary.withValues(alpha: 0.85)),
+                    ),
+                    const Spacer(),
+                    const _ValueProps(),
+                    const SizedBox(height: AppSpacing.xl),
+                    _SignInCard(),
+                    const SizedBox(height: AppSpacing.lg),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -134,43 +65,115 @@ class AuthScreen extends StatelessWidget {
   }
 }
 
-class _FeatureItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
+class _Logo extends StatelessWidget {
+  const _Logo({required this.color});
+  final Color color;
+  @override
+  Widget build(BuildContext context) => Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(Icons.holiday_village_rounded, color: color, size: 28),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Text('KothaKhoj',
+              style: context.text.titleLarge?.copyWith(color: color)),
+        ],
+      );
+}
 
-  const _FeatureItem({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
+class _ValueProps extends StatelessWidget {
+  const _ValueProps();
   @override
   Widget build(BuildContext context) {
-    return Column(
+    final color = context.scheme.onPrimary;
+    const items = [
+      (Icons.verified_rounded, 'Verified listings'),
+      (Icons.bolt_rounded, 'Instant booking'),
+      (Icons.place_rounded, 'Local to KTM'),
+    ];
+    return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(AppSizes.paddingM),
-          decoration: BoxDecoration(
-            color: AppColors.primaryColorLight.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(AppSizes.radiusM),
+        for (final (icon, label) in items)
+          Expanded(
+            child: Column(
+              children: [
+                Icon(icon, color: color, size: AppIconSize.md),
+                const SizedBox(height: AppSpacing.xs),
+                Text(label,
+                    textAlign: TextAlign.center,
+                    style: context.text.labelSmall
+                        ?.copyWith(color: color.withValues(alpha: 0.9))),
+              ],
+            ),
           ),
-          child: Icon(
-            icon,
-            size: AppSizes.iconL,
-            color: AppColors.primaryColor,
-          ),
-        ),
-        const SizedBox(height: AppSizes.paddingS),
-        Text(
-          title,
-          style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600),
-        ),
-        Text(
-          subtitle,
-          style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
-        ),
       ],
     );
   }
+}
+
+class _SignInCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<AuthProvider>(
+      builder: (context, auth, _) {
+        final loading = auth.state == AuthState.loading;
+        return Column(
+          children: [
+            Material(
+              color: context.scheme.surface,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              child: AppButton(
+                label: 'Continue with Google',
+                icon: Icons.g_mobiledata_rounded,
+                variant: AppButtonVariant.filled,
+                isLoading: loading,
+                backgroundColor: context.scheme.surface,
+                foregroundColor: context.scheme.onSurface,
+                onPressed: loading ? null : auth.signInWithGoogle,
+              ),
+            ),
+            if (auth.errorMessage != null) ...[
+              const SizedBox(height: AppSpacing.md),
+              _ErrorBanner(message: auth.errorMessage!),
+            ],
+            const SizedBox(height: AppSpacing.md),
+            Text('By continuing you agree to our Terms & Privacy Policy.',
+                textAlign: TextAlign.center,
+                style: context.text.labelSmall?.copyWith(
+                    color: context.scheme.onPrimary.withValues(alpha: 0.75))),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ErrorBanner extends StatelessWidget {
+  const _ErrorBanner({required this.message});
+  final String message;
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: context.scheme.errorContainer,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.error_outline_rounded,
+                color: context.scheme.onErrorContainer, size: AppIconSize.sm),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(message,
+                  style: context.text.bodySmall
+                      ?.copyWith(color: context.scheme.onErrorContainer)),
+            ),
+          ],
+        ),
+      );
 }

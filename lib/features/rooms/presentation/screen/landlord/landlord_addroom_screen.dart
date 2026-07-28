@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:kothakhoj/core/constants/app_constants.dart';
 import 'package:kothakhoj/core/constants/app_theme.dart';
+import 'package:kothakhoj/core/services/cloudinary_service.dart';
 import 'package:kothakhoj/features/auth/presentation/auth_provider.dart';
 import 'package:kothakhoj/features/rooms/domain/room.dart';
 import 'package:kothakhoj/features/rooms/presentation/provider/room_provider.dart';
 import 'package:kothakhoj/shared/widgets/common_widgets.dart';
 import 'package:provider/provider.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class LandlordAddRoomScreen extends StatefulWidget {
   const LandlordAddRoomScreen({super.key});
@@ -23,6 +26,26 @@ class _LandlordAddRoomScreenState extends State<LandlordAddRoomScreen> {
   String? _selectedLocation;
   String? _selectedType;
   final List<String> _selectedFeatures = [];
+
+  //state fields for image upload part
+
+  File? _selectedImage;
+  bool _isUploadingImage = false;
+  final _imagePicker = ImagePicker();
+
+  Future<void> _pickRoomImage() async {
+    final pickedFile = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1600,
+      imageQuality: 80,
+    );
+
+    if (pickedFile == null) return;
+
+    setState(() {
+      _selectedImage = File(pickedFile.path);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -245,6 +268,41 @@ class _LandlordAddRoomScreenState extends State<LandlordAddRoomScreen> {
                       ),
 
                       const SizedBox(height: AppSizes.paddingM),
+                      Text('Room Image', style: AppTextStyles.heading3),
+                      const SizedBox(height: AppSizes.paddingS),
+                      GestureDetector(
+                        onTap: _pickRoomImage,
+                        child: Container(
+                          width: double.infinity,
+                          height: 180,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.grey.withOpacity(0.2),
+                            ),
+                            color: Colors.grey.withOpacity(0.05),
+                          ),
+                          child: _selectedImage != null
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Image.file(
+                                    _selectedImage!,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Icon(Icons.photo_library, size: 36),
+                                      SizedBox(height: 8),
+                                      Text('Select room image'),
+                                    ],
+                                  ),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSizes.paddingL),
 
                       // Features
                       Text('Features', style: AppTextStyles.heading3),
@@ -301,9 +359,11 @@ class _LandlordAddRoomScreenState extends State<LandlordAddRoomScreen> {
                             child: CustomButton(
                               text: 'Add Room',
                               isLoading:
-                                  roomProvider.state == RoomState.loading,
-                              onPressed: () =>
-                                  _addRoom(authProvider, roomProvider),
+                                  roomProvider.state == RoomState.loading ||
+                                  _isUploadingImage,
+                              onPressed: _isUploadingImage
+                                  ? null
+                                  : () => _addRoom(authProvider, roomProvider),
                             ),
                           );
                         },
@@ -328,8 +388,32 @@ class _LandlordAddRoomScreenState extends State<LandlordAddRoomScreen> {
     final user = authProvider.user!;
     final now = DateTime.now();
 
+    String? uploadedImageUrl;
+    if (_selectedImage != null) {
+      setState(() => _isUploadingImage = true);
+
+      try {
+        final cloudinaryService = CloudinaryService(
+          cloudName: 'ds1gaxnav',
+          uploadPreset: 'room_upload',
+        );
+        uploadedImageUrl = await cloudinaryService.uploadImage(_selectedImage!);
+      } catch (e) {
+        setState(() => _isUploadingImage = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Image upload failed: ${e.toString()}'),
+            backgroundColor: AppColors.errorColor,
+          ),
+        );
+        return;
+      } finally {
+        setState(() => _isUploadingImage = false);
+      }
+    }
+
     final room = Room(
-      id: '', // Will be set by repository
+      id: '',
       title: _titleController.text.trim(),
       description: _descriptionController.text.trim(),
       type: _selectedType!,
@@ -337,7 +421,7 @@ class _LandlordAddRoomScreenState extends State<LandlordAddRoomScreen> {
       address: _addressController.text.trim(),
       price: double.parse(_priceController.text),
       features: _selectedFeatures,
-      imageUrls: [], // Skip images for MVP
+      imageUrls: uploadedImageUrl != null ? [uploadedImageUrl] : [],
       ownerId: user.id,
       ownerName: user.displayName,
       ownerPhone: user.phoneNumber,

@@ -1,16 +1,27 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
-import '../domain/user.dart';
+
 import '../domain/auth_repository.dart';
+import '../domain/user.dart';
 
 enum AuthState { initial, loading, authenticated, unauthenticated, error }
 
+/// v2 cleanup: single source of truth from the auth stream (v1 had a race
+/// where both the stream listener and `_initializeAuth` set state). No prints.
 class AuthProvider extends ChangeNotifier {
-  final AuthRepository _authRepository;
-
-  AuthProvider(this._authRepository) {
-    _listenToAuthChanges();
-    _initializeAuth();
+  AuthProvider(this._repo) {
+    _sub = _repo.authStateChanges.listen(
+      (user) => _apply(
+        user != null ? AuthState.authenticated : AuthState.unauthenticated,
+        user: user,
+      ),
+      onError: (Object e) => _apply(AuthState.error, error: e.toString()),
+    );
   }
+
+  final AuthRepository _repo;
+  StreamSubscription<User?>? _sub;
 
   AuthState _state = AuthState.initial;
   User? _user;
@@ -21,129 +32,74 @@ class AuthProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _user != null;
 
-  void _listenToAuthChanges() {
-    _authRepository.authStateChanges.listen(
-  (User? user) {
-    print('Auth state changed: ${user?.email ?? 'null'}');
-    _user = user;
-    _state = user != null ? AuthState.authenticated : AuthState.unauthenticated;
-    _errorMessage = null; // clear previous error
-    notifyListeners();
-  },
-  onError: (error) {
-    print('Auth state change error: $error');
-    _setState(AuthState.error, 'Authentication error: $error');
-  },
-);
-
-    // _authRepository.authStateChanges.listen(
-    //   (User? user) {
-    //     print('Auth state changed: ${user?.email ?? 'null'}');
-    //     _user = user;
-    //     if (_state == AuthState.loading) {
-    //       _state = user != null
-    //           ? AuthState.authenticated
-    //           : AuthState.unauthenticated;
-    //       _errorMessage = null;
-    //       notifyListeners();
-    //     }
-    //   },
-    //   onError: (error) {
-    //     print('Auth state change error: $error');
-    //     if (_state == AuthState.loading) {
-    //       _setState(AuthState.error, 'Authentication error: $error');
-    //     }
-    //   },
-    // );
-  }
-
-  Future<void> _initializeAuth() async {
-    final result = await _authRepository.getCurrentUser();
+  Future<void> checkAuthStatus() async {
+    _apply(AuthState.loading);
+    final result = await _repo.getCurrentUser();
     result.fold(
-      (failure) => _setState(AuthState.error, failure.message),
-      (user) => _setState(
+      (f) => _apply(AuthState.unauthenticated),
+      (user) => _apply(
         user != null ? AuthState.authenticated : AuthState.unauthenticated,
-        null,
-        user,
+        user: user,
+        clearUser: user == null,
       ),
     );
   }
 
   Future<void> signInWithGoogle() async {
-    print('Starting Google Sign-In...');
-    _setState(AuthState.loading, null);
-
-    try {
-      final result = await _authRepository.signInWithGoogle();
-      result.fold(
-  (failure) => _setState(AuthState.error, failure.message),
-  (user) => _setState(AuthState.authenticated, null, user),
-);
-
-      // result.fold(
-      //   (failure) {
-      //     print('Sign-in failed: ${failure.message}');
-      //     _setState(AuthState.error, failure.message);
-      //   },
-      //   (user) {
-      //     print('Sign-in successful: ${user.email}');
-      //     // Don't set state here, let authStateChanges handle it
-      //     _errorMessage = null;
-      //   },
-      // );
-    } catch (e) {
-      print('Sign-in exception: $e');
-      _setState(AuthState.error, 'Sign in failed: ${e.toString()}');
-    }
-  }
-
-  Future<void> switchRole(String newRole) async {
-    if (_user == null) return;
-
-    _setState(AuthState.loading, null);
-
-    final result = await _authRepository.updateUserRole(_user!.id, newRole);
+    _apply(AuthState.loading);
+    final result = await _repo.signInWithGoogle();
     result.fold(
-      (failure) => _setState(AuthState.error, failure.message),
-      (updatedUser) => _setState(AuthState.authenticated, null, updatedUser),
+      (f) => _apply(AuthState.error, error: f.message),
+      (user) => _apply(AuthState.authenticated, user: user),
     );
   }
 
-  Future<void> checkAuthStatus() async {
-    _setState(AuthState.loading, null);
-
-    final result = await _authRepository.getCurrentUser();
+  Future<void> switchRole(String newRole) async {
+    final current = _user;
+    if (current == null || current.activeRole == newRole) return;
+    // Optimistic update for an instant toggle; revert on failure.
+    _apply(AuthState.authenticated, user: current.copyWith(activeRole: newRole));
+    final result = await _repo.updateUserRole(current.id, newRole);
     result.fold(
-      (failure) => _setState(AuthState.error, failure.message),
-      (user) => _setState(
-        user != null ? AuthState.authenticated : AuthState.unauthenticated,
-        null,
-        user,
-      ),
+      (f) => _apply(AuthState.authenticated, user: current, error: f.message),
+      (updated) => _apply(AuthState.authenticated, user: updated),
     );
   }
 
   Future<void> signOut() async {
-    _setState(AuthState.loading, null);
-
-    final result = await _authRepository.signOut();
+    _apply(AuthState.loading);
+    final result = await _repo.signOut();
     result.fold(
-      (failure) => _setState(AuthState.error, failure.message),
-      (_) => _setState(AuthState.unauthenticated, null, null),
+      (f) => _apply(AuthState.error, error: f.message),
+      (_) => _apply(AuthState.unauthenticated, clearUser: true),
     );
   }
 
-  void _setState(AuthState newState, String? errorMessage, [User? user]) {
-    _state = newState;
-    _errorMessage = errorMessage;
-    if (user != null) _user = user;
+  void clearError() {
+    _errorMessage = null;
+    _state = _user != null ? AuthState.authenticated : AuthState.unauthenticated;
     notifyListeners();
   }
 
-  void clearError() {
-  _errorMessage = null;
-  _state = _user != null ? AuthState.authenticated : AuthState.unauthenticated;
-  notifyListeners();
-}
+  void _apply(
+    AuthState state, {
+    User? user,
+    String? error,
+    bool clearUser = false,
+  }) {
+    _state = state;
+    _errorMessage = error;
+    if (clearUser) {
+      _user = null;
+    } else if (user != null) {
+      _user = user;
+    }
+    notifyListeners();
+  }
 
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
 }
