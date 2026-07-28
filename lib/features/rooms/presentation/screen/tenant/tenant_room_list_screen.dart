@@ -172,11 +172,12 @@ class _TenantRoomListScreenState extends State<TenantRoomListScreen> {
           ];
         }
         final width = MediaQuery.sizeOf(context).width;
-        final columns = width >= AppBreakpoints.desktop
-            ? 3
-            : width >= AppBreakpoints.tablet
-                ? 2
-                : 1;
+        // final columns = width >= AppBreakpoints.desktop
+        //     ? 3
+        //     : width >= AppBreakpoints.tablet
+        //         ? 2
+        //         : 1;
+        final columns = 1;
         final myId = auth.user?.id;
 
         if (columns == 1) {

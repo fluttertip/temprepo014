@@ -42,7 +42,8 @@ class _HomeShellState extends State<HomeShell> {
         final index = _index.clamp(0, tabs.length - 1);
 
         final width = MediaQuery.sizeOf(context).width;
-        final wide = width >= AppBreakpoints.tablet;
+        // final wide = width >= AppBreakpoints.tablet;
+        const wide = false;
 
         final body = IndexedStack(
           index: index,
@@ -58,35 +59,37 @@ class _HomeShellState extends State<HomeShell> {
             ),
             actions: [const _ProfileMenu(), const SizedBox(width: AppSpacing.sm)],
           ),
-          body: wide
-              ? Row(
-                  children: [
-                    NavigationRail(
-                      selectedIndex: index,
-                      onDestinationSelected: (i) => setState(() => _index = i),
-                      labelType: NavigationRailLabelType.all,
-                      destinations: [
-                        for (final t in tabs)
-                          NavigationRailDestination(
-                            icon: Icon(t.icon),
-                            selectedIcon: Icon(t.activeIcon),
-                            label: Text(t.label),
-                          ),
-                      ],
-                    ),
-                    const VerticalDivider(width: 1),
-                    Expanded(
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints:
-                              const BoxConstraints(maxWidth: AppBreakpoints.desktop),
-                          child: body,
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              : body,
+          body: 
+          // wide
+          //     ? Row(
+          //         children: [
+          //           NavigationRail(
+          //             selectedIndex: index,
+          //             onDestinationSelected: (i) => setState(() => _index = i),
+          //             labelType: NavigationRailLabelType.all,
+          //             destinations: [
+          //               for (final t in tabs)
+          //                 NavigationRailDestination(
+          //                   icon: Icon(t.icon),
+          //                   selectedIcon: Icon(t.activeIcon),
+          //                   label: Text(t.label),
+          //                 ),
+          //             ],
+          //           ),
+          //           const VerticalDivider(width: 1),
+          //           Expanded(
+          //             child: Center(
+          //               child: ConstrainedBox(
+          //                 constraints:
+          //                     const BoxConstraints(maxWidth: AppBreakpoints.desktop),
+          //                 child: body,
+          //               ),
+          //             ),
+          //           ),
+          //         ],
+          //       )
+              // : 
+              body,
           bottomNavigationBar: wide
               ? null
               : NavigationBar(
