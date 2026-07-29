@@ -35,7 +35,9 @@ class RoomCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = context.scheme;
     final text = context.text;
-    final image = room.imageUrls.isNotEmpty ? room.imageUrls.first : null;
+    final image = room.imageUrls.isNotEmpty
+      ? room.imageUrls.first
+      : _defaultImageForRoom(room.id);
 
     return Semantics(
       button: true,
@@ -209,6 +211,23 @@ class _Placeholder extends StatelessWidget {
         child: Icon(Icons.apartment_rounded,
             size: AppIconSize.xl, color: scheme.onSurfaceVariant),
       );
+}
+
+// A small deterministic set of pleasant room photos to use as a fallback
+// when a listing doesn't have an uploaded image. We pick one using the
+// room id hash so the same room gets the same fallback each time.
+const List<String> _kDefaultRoomImages = [
+  'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2',
+  'https://images.unsplash.com/photo-1505692794400-4a3a8a2f0d1b',
+  'https://images.unsplash.com/photo-1508057198894-247b23fe5ade',
+  'https://images.unsplash.com/photo-1493809842364-78817add7ffb',
+  'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb',
+];
+
+String _defaultImageForRoom(String id) {
+  if (id.isEmpty) return _kDefaultRoomImages.first;
+  final idx = id.hashCode.abs() % _kDefaultRoomImages.length;
+  return '${_kDefaultRoomImages[idx]}?auto=format&fit=crop&w=1200&q=80';
 }
 
 class _Chip extends StatelessWidget {

@@ -62,7 +62,7 @@ class _HomeShellState extends State<HomeShell> {
             title: Padding(
               padding: const EdgeInsets.only(top: AppSpacing.sm),
               child: SizedBox(
-                width: 220,
+                width: 320,
                 child: RoleSwitcher(
                   activeRole: user.activeRole,
                   onChanged: auth.switchRole,

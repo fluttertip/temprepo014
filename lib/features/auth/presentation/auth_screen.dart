@@ -80,7 +80,7 @@ class _Logo extends StatelessWidget {
             child: Icon(Icons.holiday_village_rounded, color: color, size: 28),
           ),
           const SizedBox(width: AppSpacing.md),
-          Text('KothaKhoj',
+          Text('Room Finder',
               style: context.text.titleLarge?.copyWith(color: color)),
         ],
       );

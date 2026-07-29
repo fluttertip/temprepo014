@@ -26,14 +26,14 @@ class RoleSwitcher extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final maxW = constraints.maxWidth.isFinite ? constraints.maxWidth : 260.0;
-        final width = maxW.clamp(200.0, 300.0);
+        final maxW = constraints.maxWidth.isFinite ? constraints.maxWidth : 320.0;
+        final width = maxW.clamp(240.0, 360.0);
         final thumbW = (width - 8) / 2;
 
         return Container(
           width: width,
-          height: 44,
-          padding: const EdgeInsets.all(4),
+          height: 56,
+          padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
             color: scheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -46,7 +46,7 @@ class RoleSwitcher extends StatelessWidget {
                 alignment: isFind ? Alignment.centerLeft : Alignment.centerRight,
                 child: Container(
                   width: thumbW,
-                  height: 36,
+                  height: 48,
                   decoration: BoxDecoration(
                     color: scheme.primary,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -103,11 +103,11 @@ class _Segment extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        child: Row(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 18, color: fg),
-            const SizedBox(width: 6),
+            const SizedBox(height: 2),
             AnimatedDefaultTextStyle(
               duration: AppDurations.fast,
               style: context.text.labelLarge!.copyWith(color: fg),
